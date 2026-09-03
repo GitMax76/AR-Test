@@ -3,57 +3,43 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <title>AR Experience</title>
+    <title>WebAR Multi-Target Experience</title>
 
     <!-- Core A-Frame e MindAR -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
+      :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --bg-dark: #0f172a;
+        --surface-glass: rgba(15, 23, 42, 0.75);
+        --border-glass: rgba(255, 255, 255, 0.18);
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         overflow: hidden;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #000;
+        color: var(--text-main);
+        user-select: none;
+        -webkit-user-select: none;
       }
 
-      /* Controlli a schermo */
-      .ui-container {
-        position: fixed;
-        bottom: 24px;
-        left: 0;
-        right: 0;
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        z-index: 1000;
-        pointer-events: none;
-      }
-
-      .btn-ar {
-        pointer-events: auto;
-        padding: 12px 24px;
-        background: rgba(20, 20, 20, 0.85);
-        color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 30px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-        transition: transform 0.1s ease, background 0.2s ease;
-      }
-
-      .btn-ar:active {
-        transform: scale(0.95);
-      }
-
-      /* Schermata iniziale per sblocco permessi e autoplay */
+      /* Schermata Overlay Iniziale */
       #startOverlay {
         position: fixed;
         inset: 0;
-        background: #11141a;
-        color: #ffffff;
+        background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%);
+        color: var(--text-main);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -61,46 +47,220 @@
         z-index: 2000;
         padding: 24px;
         text-align: center;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
+      }
+
+      #startOverlay.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .overlay-icon {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+      }
+
+      .overlay-icon svg {
+        width: 34px;
+        height: 34px;
+        fill: white;
       }
 
       #startOverlay h1 {
-        font-size: 1.6rem;
-        margin-bottom: 8px;
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+        letter-spacing: -0.02em;
       }
 
       #startOverlay p {
         font-size: 0.95rem;
-        color: #94a3b8;
-        max-width: 320px;
-        line-height: 1.4;
-        margin-bottom: 24px;
+        color: var(--text-muted);
+        max-width: 340px;
+        line-height: 1.5;
+        margin: 0 0 24px 0;
+      }
+
+      .targets-preview-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--border-glass);
+        border-radius: 9999px;
+        font-size: 0.82rem;
+        color: #cbd5e1;
+        margin-bottom: 28px;
       }
 
       .btn-start {
-        padding: 14px 32px;
-        background: #2563eb;
+        padding: 15px 36px;
+        background: var(--primary);
         color: white;
         border: none;
         border-radius: 9999px;
         font-size: 16px;
         font-weight: 600;
         cursor: pointer;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+        box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.5);
+        transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn-start:hover:not(:disabled) {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.6);
+      }
+
+      .btn-start:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      .btn-start:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .camera-hint {
+        margin-top: 18px;
+        font-size: 0.78rem;
+        color: #64748b;
+      }
+
+      /* Controlli Fluttuanti UI */
+      .ui-container {
+        position: fixed;
+        bottom: 24px;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        z-index: 1000;
+        pointer-events: none;
+      }
+
+      .target-indicator {
+        background: var(--surface-glass);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border-glass);
+        color: #fff;
+        padding: 8px 18px;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        pointer-events: auto;
+      }
+
+      .target-indicator.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .target-indicator .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #22c55e;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #22c55e;
+      }
+
+      .actions-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        pointer-events: auto;
+      }
+
+      .btn-ar {
+        padding: 12px 20px;
+        background: var(--surface-glass);
+        color: #fff;
+        border: 1px solid var(--border-glass);
+        border-radius: 30px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+      }
+
+      .btn-ar:hover {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .btn-ar:active {
+        transform: scale(0.95);
+      }
+
+      .btn-ar.active {
+        background: rgba(37, 99, 235, 0.85);
+        border-color: rgba(96, 165, 250, 0.6);
       }
     </style>
   </head>
   <body>
 
-    <!-- Overlay iniziale -->
+    <!-- Overlay iniziale di avvio per autorizzazioni e autoplay -->
     <div id="startOverlay">
-      <h1>Inizia Esperienza AR</h1>
-      <p>Consenti l'accesso alla fotocamera e inquadra l'immagine per riprodurre il video.</p>
-      <button class="btn-start" id="startBtn">Avvia Fotocamera</button>
+      <div class="overlay-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 6V4h4V2H4a2 2 0 0 0-2 2v4h2V6zm14-4h-4v2h4v2h2V4a2 2 0 0 0-2-2zM2 18v-4H0v4a2 2 0 0 0 2 2h4v-2H2zm18 0h-4v2h4a2 2 0 0 0 2-2v-4h-2v4zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+        </svg>
+      </div>
+      <h1>Esperienza WebAR</h1>
+      <p>Inquadra l'immagine con la fotocamera per riprodurre il video associato in realtà aumentata.</p>
+      
+      <div id="targetsBadge" class="targets-preview-badge">
+        Caricamento configurazione...
+      </div>
+
+      <button class="btn-start" id="startBtn" disabled>
+        <span>Avvia Esperienza</span>
+      </button>
+      <span class="camera-hint">Richiede l'autorizzazione all'uso della fotocamera</span>
     </div>
 
-    <!-- UI Overlay per l'audio -->
+    <!-- Controlli a schermo UI -->
     <div class="ui-container">
-      <button id="muteButton" class="btn-ar">Attiva Audio</button>
+      <div id="targetIndicator" class="target-indicator">
+        <span class="pulse-dot"></span>
+        <span id="targetNameLabel">Target Rilevato</span>
+      </div>
+
+      <div class="actions-bar">
+        <button id="muteButton" class="btn-ar">
+          <span id="muteIcon">🔇</span>
+          <span id="muteLabel">Audio: Disattivato</span>
+        </button>
+      </div>
     </div>
 
     <!-- Scena MindAR -->
@@ -111,83 +271,204 @@
       vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false">
 
-      <a-assets>
-        <!-- Video hostato su Cloudinary con crossorigin attivo -->
-        <video 
-          id="arVideo" 
-          src="https://res.cloudinary.com/h0ch4sxd/video/upload/v1788443837/v24044gl0000d7vo42fog65gfgphs5mg.mp4" 
-          preload="auto" 
-          loop="true" 
-          crossorigin="anonymous" 
-          playsinline 
-          webkit-playsinline 
-          muted>
-        </video>
+      <!-- Asset container generato dinamicamente -->
+      <a-assets id="arAssets">
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Target 0 collegato al marker compilato -->
-      <a-entity id="targetMarker" mindar-image-target="targetIndex: 0">
-        <a-video 
-          id="videoPlane"
-          src="#arVideo" 
-          width="1" 
-          height="1" 
-          position="0 0 0" 
-          rotation="0 0 0">
-        </a-video>
-      </a-entity>
+      <!-- Le a-entity mindar-image-target verranno inserite a runtime da targets.json -->
 
     </a-scene>
 
     <script>
-      const sceneEl = document.querySelector('a-scene');
-      const targetMarker = document.querySelector('#targetMarker');
-      const video = document.querySelector('#arVideo');
-      const videoPlane = document.querySelector('#videoPlane');
-      const muteButton = document.getElementById('muteButton');
+      // Elementi UI
       const startOverlay = document.getElementById('startOverlay');
       const startBtn = document.getElementById('startBtn');
+      const targetsBadge = document.getElementById('targetsBadge');
+      const muteButton = document.getElementById('muteButton');
+      const muteIcon = document.getElementById('muteIcon');
+      const muteLabel = document.getElementById('muteLabel');
+      const targetIndicator = document.getElementById('targetIndicator');
+      const targetNameLabel = document.getElementById('targetNameLabel');
 
-      // Calcola e adatta le proporzioni (width/height) appena i metadata del video sono pronti
-      video.addEventListener('loadedmetadata', () => {
-        if (video.videoWidth && video.videoHeight) {
-          const ratio = video.videoHeight / video.videoWidth;
-          videoPlane.setAttribute('width', 1);
-          videoPlane.setAttribute('height', ratio);
+      // Elementi A-Frame
+      const sceneEl = document.querySelector('a-scene');
+      const assetsEl = document.getElementById('arAssets');
+
+      // Stato dell'applicazione
+      let isAudioMuted = true;
+      let targetsData = [];
+      let activeTargetItem = null;
+      const targetEntitiesMap = new Map();
+      const videoElementsList = [];
+
+      // Mostra / Nascondi notifica target
+      function showTargetNotification(name) {
+        targetNameLabel.textContent = `🎯 ${name}`;
+        targetIndicator.classList.add('visible');
+      }
+
+      function hideTargetNotification() {
+        targetIndicator.classList.remove('visible');
+      }
+
+      // Aggiorna stato pulsante Mute
+      function updateMuteButtonUI() {
+        if (isAudioMuted) {
+          muteIcon.textContent = '🔇';
+          muteLabel.textContent = 'Audio: Disattivato';
+          muteButton.classList.remove('active');
+        } else {
+          muteIcon.textContent = '🔊';
+          muteLabel.textContent = 'Audio: Attivo';
+          muteButton.classList.add('active');
         }
-      });
+      }
 
-      // Click sul pulsante iniziale: avvia AR e sblocca l'autoplay del video
-      startBtn.addEventListener('click', () => {
-        startOverlay.style.display = 'none';
+      // 1. Caricamento dinamico della configurazione targets.json
+      async function initDynamicTargets() {
+        try {
+          const response = await fetch('./targets.json', { cache: 'no-cache' });
+          if (!response.ok) {
+            throw new Error(`Impossibile leggere targets.json (Status: ${response.status})`);
+          }
+          targetsData = await response.json();
 
-        // Avvio del sistema MindAR
-        sceneEl.systems["mindar-image-system"].start();
+          if (!Array.isArray(targetsData) || targetsData.length === 0) {
+            targetsBadge.textContent = 'Nessun target configurato in targets.json';
+            return;
+          }
 
-        // Warm-up del flusso video per policy iOS/Android
-        video.play().then(() => {
-          video.pause();
-        }).catch(err => {
-          console.warn("Autoplay policy check:", err);
+          targetsBadge.textContent = `Target disponibili: ${targetsData.length}`;
+
+          // Creazione dinamica per ogni target configurato
+          targetsData.forEach((targetItem) => {
+            const index = targetItem.index;
+            const videoId = `arVideo-${index}`;
+
+            // 1. Creazione programmatic del tag <video> dentro <a-assets>
+            const videoEl = document.createElement('video');
+            videoEl.id = videoId;
+            videoEl.src = targetItem.videoUrl;
+            videoEl.setAttribute('preload', 'none');
+            videoEl.setAttribute('crossorigin', 'anonymous');
+            videoEl.setAttribute('playsinline', '');
+            videoEl.setAttribute('webkit-playsinline', '');
+            videoEl.muted = isAudioMuted;
+            videoEl.loop = true;
+            assetsEl.appendChild(videoEl);
+            videoElementsList.push(videoEl);
+
+            // 2. Creazione programmatic del tag <a-entity mindar-image-target>
+            const targetEntity = document.createElement('a-entity');
+            targetEntity.setAttribute('mindar-image-target', `targetIndex: ${index}`);
+            targetEntity.id = `targetEntity-${index}`;
+
+            // 3. Creazione del piano <a-video>
+            const videoPlane = document.createElement('a-video');
+            videoPlane.id = `videoPlane-${index}`;
+            videoPlane.setAttribute('src', `#${videoId}`);
+            videoPlane.setAttribute('width', '1');
+            videoPlane.setAttribute('height', '1');
+            videoPlane.setAttribute('position', '0 0 0');
+            videoPlane.setAttribute('rotation', '0 0 0');
+            targetEntity.appendChild(videoPlane);
+
+            sceneEl.appendChild(targetEntity);
+
+            // Calcolo e adattamento proporzioni dinamiche video
+            const adjustAspectRatio = () => {
+              if (videoEl.videoWidth && videoEl.videoHeight) {
+                const ratio = videoEl.videoHeight / videoEl.videoWidth;
+                videoPlane.setAttribute('width', '1');
+                videoPlane.setAttribute('height', ratio.toString());
+              }
+            };
+            videoEl.addEventListener('loadedmetadata', adjustAspectRatio);
+
+            // Registrazione eventi targetFound e targetLost (Gestione anti-sovrapposizione)
+            targetEntity.addEventListener('targetFound', () => {
+              console.log(`[MindAR] Target trovato: #${index} - ${targetItem.name}`);
+
+              // Se un altro video è in esecuzione, mettilo in pausa immediatamente
+              if (activeTargetItem && activeTargetItem.videoEl !== videoEl) {
+                activeTargetItem.videoEl.pause();
+              }
+
+              activeTargetItem = {
+                index: index,
+                name: targetItem.name,
+                videoEl: videoEl
+              };
+
+              // Assicura conformità mute
+              videoEl.muted = isAudioMuted;
+              
+              videoEl.play().catch(err => {
+                console.warn(`[Video Play Interrupted on target ${index}]:`, err);
+              });
+
+              showTargetNotification(targetItem.name);
+            });
+
+            targetEntity.addEventListener('targetLost', () => {
+              console.log(`[MindAR] Target perso: #${index} - ${targetItem.name}`);
+
+              if (activeTargetItem && activeTargetItem.videoEl === videoEl) {
+                videoEl.pause();
+                activeTargetItem = null;
+                hideTargetNotification();
+              }
+            });
+
+            targetEntitiesMap.set(index, { targetEntity, videoEl, videoPlane });
+          });
+
+          // Abilita pulsante avvio
+          startBtn.disabled = false;
+        } catch (err) {
+          console.error('[WebAR Setup Error]', err);
+          targetsBadge.textContent = `Errore di inizializzazione: ${err.message}`;
+        }
+      }
+
+      // Click sul pulsante di avvio: sblocca le policy multimediali e avvia MindAR
+      startBtn.addEventListener('click', async () => {
+        startOverlay.classList.add('hidden');
+
+        // Avvio del motore di tracking MindAR
+        try {
+          const mindarSystem = sceneEl.systems['mindar-image-system'];
+          if (mindarSystem) {
+            mindarSystem.start();
+          } else {
+            console.warn('mindar-image-system non ancora pronto, attesa evento scene loaded');
+            sceneEl.addEventListener('loaded', () => {
+              sceneEl.systems['mindar-image-system'].start();
+            });
+          }
+        } catch (err) {
+          console.error('Errore avvio fotocamera MindAR:', err);
+        }
+
+        // Warm-up per sbloccare l'audio context browser
+        videoElementsList.forEach(v => {
+          v.muted = isAudioMuted;
         });
       });
 
-      // Eventi di tracking del marker
-      targetMarker.addEventListener("targetFound", () => {
-        video.play();
-      });
-
-      targetMarker.addEventListener("targetLost", () => {
-        video.pause();
-      });
-
-      // Gestione Mute / Unmute
+      // Gestione del Mute / Unmute Globale
       muteButton.addEventListener('click', () => {
-        video.muted = !video.muted;
-        muteButton.innerText = video.muted ? "Attiva Audio" : "Disattiva Audio";
+        isAudioMuted = !isAudioMuted;
+        videoElementsList.forEach(video => {
+          video.muted = isAudioMuted;
+        });
+        updateMuteButtonUI();
       });
+
+      // Avvia configurazione
+      initDynamicTargets();
     </script>
   </body>
 </html>
