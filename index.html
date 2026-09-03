@@ -1,41 +1,183 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://aframe.io"></script>
-    <script src="https://jsdelivr.net"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>WebAR Experience - MindAR</title>
+
+    <!-- Core A-Frame 1.4.2 -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <!-- MindAR Image Tracking per A-Frame 1.2.5 -->
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
     <style>
-      body { margin: 0; overflow: hidden; }
-      #muteButton {
-        position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-        z-index: 999; padding: 10px 20px; background: #fff; border: none; border-radius: 5px; font-family: sans-serif;
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      /* Barra comandi UI */
+      .ui-container {
+        position: fixed;
+        bottom: 24px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        z-index: 1000;
+        pointer-events: none;
+      }
+
+      .btn-ar {
+        pointer-events: auto;
+        padding: 12px 24px;
+        background: rgba(20, 20, 20, 0.85);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 28px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        transition: transform 0.15s ease, background-color 0.2s ease;
+      }
+
+      .btn-ar:active {
+        transform: scale(0.95);
+      }
+
+      /* Schermata di avvio obbligatoria per policy autoplay mobili */
+      #startOverlay {
+        position: fixed;
+        inset: 0;
+        background: #0f1115;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 24px;
+        text-align: center;
+      }
+
+      #startOverlay h1 {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+      }
+
+      #startOverlay p {
+        font-size: 0.95rem;
+        color: #9ca3af;
+        max-width: 320px;
+        margin-bottom: 24px;
+      }
+
+      .btn-start {
+        padding: 14px 32px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 9999px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
-    <button id="muteButton">Attiva Audio</button>
-    <a-scene mindar-image="imageTargetSrc: https://jsdelivr.net; autoStart: true; uiLoading: no; uiError: no; uiScanning: yes;" 
-             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+
+    <!-- Overlay di benvenuto per sbloccare l'audio e la fotocamera -->
+    <div id="startOverlay">
+      <h1>Esperienza AR</h1>
+      <p>Inquadra l'immagine target con la fotocamera per vedere il contenuto.</p>
+      <button class="btn-start" id="startBtn">Avvia Fotocamera</button>
+    </div>
+
+    <!-- Controlli a schermo durante l'AR -->
+    <div class="ui-container">
+      <button id="muteButton" class="btn-ar">Attiva Audio</button>
+    </div>
+
+    <!-- Scena WebAR -->
+    <!-- NOTA: Sostituisci "targets.mind" con il percorso relativo del tuo file compilato -->
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: yes;" 
+      color-space="sRGB" 
+      renderer="colorManagement: true, physicallyCorrectLights" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false">
+
       <a-assets>
-        <video id="aiVideo" src="https://google.com" 
-               preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
+        <!-- Inserisci qui il path del tuo video (es. ./video.mp4) -->
+        <video 
+          id="aiVideo" 
+          src="./video.mp4" 
+          preload="auto" 
+          loop="true" 
+          crossorigin="anonymous" 
+          playsinline 
+          webkit-playsinline 
+          muted>
+        </video>
       </a-assets>
+
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-      
-        <a-video src="#aiVideo" width="1" height="0.56" position="0 0 0" rotation="0 0 0"></a-video>
-      
+
+      <!-- Target 0 configurato correttamente con all'interno l'elemento video -->
+      <a-entity id="markerTarget" mindar-image-target="targetIndex: 0">
+        <!-- Dimensioni 16:9 proporzionate (width 1, height 0.5625) -->
+        <a-video 
+          src="#aiVideo" 
+          width="1" 
+          height="0.5625" 
+          position="0 0 0" 
+          rotation="0 0 0">
+        </a-video>
+      </a-entity>
+
     </a-scene>
+
     <script>
-      const targetEl = document.querySelector('[mindar-image-target]');
+      const sceneEl = document.querySelector('a-scene');
+      const targetEl = document.querySelector('#markerTarget');
       const video = document.querySelector('#aiVideo');
       const muteButton = document.getElementById('muteButton');
-      targetEl.addEventListener("targetFound", event => { video.play(); });
-      targetEl.addEventListener("targetLost", event => { video.pause(); });
+      const startOverlay = document.getElementById('startOverlay');
+      const startBtn = document.getElementById('startBtn');
+
+      // Avvio controllato dell'esperienza (essenziale per iOS Safari / Chrome Android)
+      startBtn.addEventListener('click', () => {
+        startOverlay.style.display = 'none';
+        
+        // Avvia il motore MindAR
+        sceneEl.systems["mindar-image-system"].start();
+
+        // Preriscalda il video in muto per aggirare il blocco browser
+        video.play().then(() => {
+          video.pause();
+        }).catch(err => {
+          console.warn("Autoplay policy check:", err);
+        });
+      });
+
+      // Gestione comparsa / scomparsa target
+      targetEl.addEventListener("targetFound", () => {
+        video.play();
+      });
+
+      targetEl.addEventListener("targetLost", () => {
+        video.pause();
+      });
+
+      // Toggle Mute Audio
       muteButton.addEventListener('click', () => {
         video.muted = !video.muted;
         muteButton.innerText = video.muted ? "Attiva Audio" : "Disattiva Audio";
       });
-      video.muted = true;
     </script>
   </body>
 </html>
