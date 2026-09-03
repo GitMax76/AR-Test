@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR-Test Admin | Gestione Target & Video</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131b2e;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --input-bg: #0b1120;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin: 2px 0 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 0 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="url"],
+    select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      transition: border-color 0.2s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-success {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+
+    .btn-danger-sm {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+    }
+
+    .btn-danger-sm:hover {
+      background: var(--accent-red);
+      color: white;
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    /* Target Items List */
+    .targets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .target-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      padding: 12px 16px;
+      border-radius: 8px;
+    }
+
+    .target-index-badge {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .target-thumb {
+      width: 54px;
+      height: 54px;
+      object-fit: cover;
+      border-radius: 6px;
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+    }
+
+    .target-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .target-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .target-path {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .target-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dropzone {
+      border: 2px dashed var(--card-border);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(11, 17, 32, 0.5);
+      transition: all 0.2s ease;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .preview-box {
+      margin-top: 14px;
+      display: none;
+      align-items: center;
+      gap: 14px;
+      background: var(--input-bg);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+
+    .preview-box img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    /* Console / Logs */
+    .log-box {
+      margin-top: 24px;
+      background: #050811;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #38bdf8;
+      max-height: 180px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-connected { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .badge-disconnected { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">🎯</div>
+        <div>
+          <h1>WebAR Target Manager</h1>
+          <p class="subtitle">Configurazione dinamica target e video per <a href="https://github.com/GitMax76/AR-Test" target="_blank" style="color:var(--primary);text-decoration:none;">GitMax76/AR-Test</a></p>
+        </div>
+      </div>
+      <div>
+        <a href="./index.html" target="_blank" class="btn btn-outline">Apri Esperienza AR ↗</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Colonna Sinistra: Configurazione GitHub e Target Attuali -->
+      <div>
+        <!-- Card Connessione GitHub -->
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-title">
+            <span>⚙️ Repository & GitHub API</span>
+            <span id="connStatus" class="badge-status badge-disconnected">Non connesso</span>
+          </div>
+
+          <div class="input-row">
+            <div class="form-group">
+              <label>Owner / Utente</label>
+              <input type="text" id="ghOwner" value="GitMax76">
+            </div>
+            <div class="form-group">
+              <label>Repository</label>
+              <input type="text" id="ghRepo" value="AR-Test">
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="form-group">
+              <label>Branch</label>
+              <input type="text" id="ghBranch" value="main">
+            </div>
+            <div class="form-group">
+              <label>Personal Access Token (PAT)</label>
+              <input type="password" id="ghToken" placeholder="ghp_xxxx o token fine-grained">
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" id="btnTestConn">Verifica e Carica Target</button>
+            <button class="btn btn-outline" id="btnSaveToken">Ricorda Token</button>
+            <button class="btn btn-outline" id="btnClearToken">Cancella</button>
+          </div>
+        </div>
+
+        <!-- Card Lista Target Attuali -->
+        <div class="card">
+          <div class="card-title" style="justify-content: space-between;">
+            <span>📋 Target Registrati (<span id="targetCount">0</span>)</span>
+            <button class="btn btn-outline" style="padding:4px 10px; font-size:0.75rem;" id="btnRefresh">Ricarica</button>
+          </div>
+
+          <div id="targetsList" class="targets-list">
+            <div style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:30px 0;">
+              Nessun target caricato. Clicca "Verifica e Carica Target" o carica il file locale.
+            </div>
+          </div>
+
+          <div style="margin-top: 18px; display:flex; gap:10px;">
+            <button class="btn btn-outline btn-full" id="btnExportJson">💾 Scarica targets.json</button>
+            <button class="btn btn-outline btn-full" id="btnCopyJson">📋 Copia JSON</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonna Destra: Aggiunta Nuovo Target & Commit Diretto -->
+      <div>
+        <div class="card">
+          <div class="card-title">
+            <span>➕ Aggiungi Nuovo Target & Video</span>
+          </div>
+
+          <div class="form-group">
+            <label>Nome Target / Riconoscimento</label>
+            <input type="text" id="newTargetName" placeholder="Es. Poster Gioco #2">
+          </div>
+
+          <div class="form-group">
+            <label>Immagine Target (.jpg / .png)</label>
+            <div class="dropzone" id="dropzone">
+              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+              <div id="dropzoneText">
+                📷 Clicca o trascina qui l'immagine del target (.jpg / .png)
+              </div>
+            </div>
+
+            <div id="previewBox" class="preview-box">
+              <img id="previewImg" src="" alt="Anteprima">
+              <div style="flex:1; min-width:0;">
+                <div id="previewName" style="font-weight:600; font-size:0.85rem;">filename.jpg</div>
+                <div id="previewSize" style="font-size:0.75rem; color:var(--text-muted);">0 KB</div>
+              </div>
+              <button class="btn-danger-sm" id="btnRemoveImg">Rimuovi</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>URL Video Esterno (Cloudinary / CDN)</label>
+            <input type="url" id="newVideoUrl" placeholder="https://res.cloudinary.com/.../video.mp4">
+            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
+              Il video deve essere raggiungibile con CORS abilitato (es. Cloudinary, GitHub raw, o CDN).
+            </div>
+          </div>
+
+          <div style="margin-top: 24px; display:flex; flex-direction:column; gap:12px;">
+            <button class="btn btn-primary btn-full" id="btnAddToList">
+              ➕ Aggiungi alla Lista Locale
+            </button>
+
+            <button class="btn btn-success btn-full" id="btnPushGithub">
+              🚀 Pubblica Tutto su GitHub (API Diretto)
+            </button>
+          </div>
+
+          <!-- Log Operazioni -->
+          <div id="logBox" class="log-box">Pronto. Inserisci il token e gestisci i target.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configurazione & Stato
+    const STORAGE_KEY_TOKEN = 'ar_test_gh_token';
+    let targets = [];
+    let selectedImageFile = null;
+    let selectedImageBase64 = null;
+    let targetsSha = null;
+
+    // Elementi UI
+    const ghOwnerInput = document.getElementById('ghOwner');
+    const ghRepoInput = document.getElementById('ghRepo');
+    const ghBranchInput = document.getElementById('ghBranch');
+    const ghTokenInput = document.getElementById('ghToken');
+    const connStatus = document.getElementById('connStatus');
+    const targetsListEl = document.getElementById('targetsList');
+    const targetCountEl = document.getElementById('targetCount');
+    const logBox = document.getElementById('logBox');
+
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const previewBox = document.getElementById('previewBox');
+    const previewImg = document.getElementById('previewImg');
+    const previewName = document.getElementById('previewName');
+    const previewSize = document.getElementById('previewSize');
+
+    const newTargetNameInput = document.getElementById('newTargetName');
+    const newVideoUrlInput = document.getElementById('newVideoUrl');
+
+    function log(msg) {
+      const ts = new Date().toLocaleTimeString();
+      logBox.textContent += `\n[${ts}] ${msg}`;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // Carica token salvato
+    const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+    if (savedToken) {
+      ghTokenInput.value = savedToken;
+      log('Token GitHub recuperato da memoria locale.');
+    }
+
+    document.getElementById('btnSaveToken').addEventListener('click', () => {
+      const token = ghTokenInput.value.trim();
+      if (token) {
+        localStorage.setItem(STORAGE_KEY_TOKEN, token);
+        alert('Token salvato in LocalStorage per le prossime sessioni.');
+      }
+    });
+
+    document.getElementById('btnClearToken').addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEY_TOKEN);
+      ghTokenInput.value = '';
+      connStatus.className = 'badge-status badge-disconnected';
+      connStatus.textContent = 'Non connesso';
+      alert('Token rimosso.');
+    });
+
+    // Helper GitHub API
+    async function ghFetch(endpoint, options = {}) {
+      const owner = ghOwnerInput.value.trim();
+      const repo = ghRepoInput.value.trim();
+      const token = ghTokenInput.value.trim();
+
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
+
+      const url = `https://api.github.com/repos/${owner}/${repo}${endpoint}`;
+      return await fetch(url, { ...options, headers: { ...headers, ...options.headers } });
+    }
+
+    // Carica targets.json dal repository o localmente
+    async function fetchTargets() {
+      log('Verifica repo e caricamento targets.json...');
+      try {
+        const res = await ghFetch('/contents/targets.json');
+        if (res.ok) {
+          const data = await res.json();
+          targetsSha = data.sha;
+          const decoded = atob(data.content.replace(/\s/g, ''));
+          targets = JSON.parse(decoded);
+          connStatus.className = 'badge-status badge-connected';
+          connStatus.textContent = 'Connesso a GitHub';
+          log(`Caricati ${targets.length} target da GitHub.`);
+        } else {
+          // Prova fallback locale
+          log('Repository non risponde o token non impostato. Tento caricamento locale...');
+          const localRes = await fetch('./targets.json');
+          if (localRes.ok) {
+            targets = await localRes.json();
+            log(`Caricati ${targets.length} target dal file locale ./targets.json.`);
+          } else {
+            throw new Error('Impossibile trovare targets.json né su GitHub né in locale.');
+          }
+        }
+        renderTargets();
+      } catch (err) {
+        log(`Errore: ${err.message}`);
+        connStatus.className = 'badge-status badge-disconnected';
+        connStatus.textContent = 'Errore Connessione';
+      }
+    }
+
+    function renderTargets() {
+      targetCountEl.textContent = targets.length;
+      if (targets.length === 0) {
+        targetsListEl.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">Nessun target registrato.</div>';
+        return;
+      }
+
+      targetsListEl.innerHTML = '';
+      targets.forEach((t, idx) => {
+        t.index = idx; // Ricalcolo coerente
+        const item = document.createElement('div');
+        item.className = 'target-item';
+
+        // Calcola thumbnail path
+        const thumbSrc = t.imagePath.startsWith('./') ? t.imagePath : `./${t.imagePath}`;
+
+        item.innerHTML = `
+          <div class="target-index-badge">#${t.index}</div>
+          <img class="target-thumb" src="${thumbSrc}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'54\\' height=\\'54\\'><rect width=\\'54\\' height=\\'54\\' fill=\\'%23243048\\'/><text x=\\'27\\' y=\\'32\\' fill=\\'%2364748b\\' text-anchor=\\'middle\\' font-size=\\'11\\'>IMG</text></svg>'" alt="${t.name}">
+          <div class="target-info">
+            <div class="target-title">${t.name}</div>
+            <div class="target-path">${t.imagePath}</div>
+            <div class="target-path" style="color:#60a5fa;"><a href="${t.videoUrl}" target="_blank" style="color:inherit;text-decoration:none;">🔗 ${t.videoUrl || 'Nessun video associato'}</a></div>
+          </div>
+          <div class="target-actions">
+            <button class="btn-danger-sm" onclick="removeTarget(${idx})">Elimina</button>
+          </div>
+        `;
+        targetsListEl.appendChild(item);
+      });
+    }
+
+    window.removeTarget = function(index) {
+      if (confirm(`Rimuovere il target #${index} (${targets[index].name})?`)) {
+        targets.splice(index, 1);
+        targets.forEach((t, i) => t.index = i);
+        renderTargets();
+        log(`Rimosso target index ${index}.`);
+      }
+    };
+
+    // Gestione File Drop / Selezione
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) handleFile(fileInput.files[0]);
+    });
+
+    function handleFile(file) {
+      selectedImageFile = file;
+      previewName.textContent = file.name;
+      previewSize.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        selectedImageBase64 = e.target.result.split(',')[1];
+        previewBox.style.display = 'flex';
+        dropzone.style.display = 'none';
+
+        if (!newTargetNameInput.value) {
+          const cleanName = file.name.replace(/\.[^/.]+$/, "");
+          newTargetNameInput.value = `Target ${targets.length + 1} (${cleanName})`;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.getElementById('btnRemoveImg').addEventListener('click', () => {
+      selectedImageFile = null;
+      selectedImageBase64 = null;
+      fileInput.value = '';
+      previewBox.style.display = 'none';
+      dropzone.style.display = 'block';
+    });
+
+    // Aggiungi a Lista Locale
+    document.getElementById('btnAddToList').addEventListener('click', () => {
+      const name = newTargetNameInput.value.trim();
+      const videoUrl = newVideoUrlInput.value.trim();
+
+      if (!name) { alert('Inserisci un nome per il target'); return; }
+      if (!videoUrl) { alert('Inserisci l\'URL del video'); return; }
+
+      // Nome file target progressivo
+      const nextIndex = targets.length;
+      const extension = selectedImageFile ? selectedImageFile.name.split('.').pop() : 'jpg';
+      const formattedNumber = String(nextIndex + 1).padStart(2, '0');
+      const filename = `${formattedNumber}.${extension}`;
+
+      targets.push({
+        index: nextIndex,
+        name: name,
+        imagePath: `./targets/${filename}`,
+        videoUrl: videoUrl,
+        _pendingFileBase64: selectedImageBase64,
+        _pendingFilename: filename
+      });
+
+      renderTargets();
+      log(`Aggiunto target #${nextIndex} (${name}) alla lista locale.`);
+
+      // Reset form
+      newTargetNameInput.value = '';
+      newVideoUrlInput.value = '';
+      document.getElementById('btnRemoveImg').click();
+    });
+
+    // Esporta / Copia JSON
+    document.getElementById('btnExportJson').addEventListener('click', () => {
+      const cleanJson = JSON.stringify(targets.map(({ _pendingFileBase64, _pendingFilename, ...rest }) => rest), null, 2);
+      const blob = new Blob([cleanJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'targets.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      log('Scaricato targets.json aggiornato.');
+    });
+
+    document.getElementById('btnCopyJson').addEventListener('click', () => {
+      const cleanJson = JSON.stringify(targets.map(({ _pendingFileBase64, _pendingFilename, ...rest }) => rest), null, 2);
+      navigator.clipboard.writeText(cleanJson).then(() => {
+        alert('JSON copiato negli appunti!');
+      });
+    });
+
+    // Pubblicazione Diretta su GitHub tramite REST API
+    document.getElementById('btnPushGithub').addEventListener('click', async () => {
+      const token = ghTokenInput.value.trim();
+      const branch = ghBranchInput.value.trim() || 'main';
+
+      if (!token) {
+        alert('È necessario inserire un Personal Access Token GitHub con permesso di scrittura sulla repository!');
+        ghTokenInput.focus();
+        return;
+      }
+
+      const btn = document.getElementById('btnPushGithub');
+      btn.disabled = true;
+      btn.textContent = '⏳ Invio modifiche a GitHub...';
+
+      try {
+        log('=== Inizio procedura di sincronizzazione GitHub ===');
+
+        // 1. Carica eventuali immagini pendenti
+        for (const t of targets) {
+          if (t._pendingFileBase64 && t._pendingFilename) {
+            log(`Caricamento immagine targets/${t._pendingFilename}...`);
+            
+            // Controlla se il file esiste già per recuperare lo sha
+            let fileSha = null;
+            const checkRes = await ghFetch(`/contents/targets/${t._pendingFilename}?ref=${branch}`);
+            if (checkRes.ok) {
+              const fileData = await checkRes.json();
+              fileSha = fileData.sha;
+            }
+
+            const putRes = await ghFetch(`/contents/targets/${t._pendingFilename}`, {
+              method: 'PUT',
+              body: JSON.stringify({
+                message: `feat(targets): upload target image ${t._pendingFilename}`,
+                content: t._pendingFileBase64,
+                branch: branch,
+                ...(fileSha ? { sha: fileSha } : {})
+              })
+            });
+
+            if (!putRes.ok) {
+              const err = await putRes.json();
+              throw new Error(`Errore upload ${t._pendingFilename}: ${err.message}`);
+            }
+
+            delete t._pendingFileBase64;
+            delete t._pendingFilename;
+            log(`✅ Immagine targets/${t._pendingFilename} inviata con successo.`);
+          }
+        }
+
+        // 2. Aggiorna targets.json
+        log('Aggiornamento targets.json su GitHub...');
+        const cleanTargets = targets.map(({ _pendingFileBase64, _pendingFilename, ...rest }) => rest);
+        const jsonContent = btoa(unescape(encodeURIComponent(JSON.stringify(cleanTargets, null, 2))));
+
+        // Recupera l'ultimo SHA di targets.json
+        const checkJsonRes = await ghFetch(`/contents/targets.json?ref=${branch}`);
+        let currentSha = targetsSha;
+        if (checkJsonRes.ok) {
+          const jd = await checkJsonRes.json();
+          currentSha = jd.sha;
+        }
+
+        const putJsonRes = await ghFetch('/contents/targets.json', {
+          method: 'PUT',
+          body: JSON.stringify({
+            message: `chore(targets): update targets.json (${targets.length} targets)`,
+            content: jsonContent,
+            branch: branch,
+            ...(currentSha ? { sha: currentSha } : {})
+          })
+        });
+
+        if (!putJsonRes.ok) {
+          const err = await putJsonRes.json();
+          throw new Error(`Errore commit targets.json: ${err.message}`);
+        }
+
+        log('✅ targets.json aggiornato e committato su GitHub!');
+        log('🚀 GitHub Actions avvierà automaticamente il workflow per ricompilare targets.mind!');
+        log('Puoi verificare l\'avanzamento qui: https://github.com/' + ghOwnerInput.value.trim() + '/' + ghRepoInput.value.trim() + '/actions');
+        alert('Operazione completata con successo!\nLe modifiche sono su GitHub e il workflow di compilazione è in esecuzione.');
+        
+        await fetchTargets();
+      } catch (err) {
+        log(`❌ ERRORE: ${err.message}`);
+        alert(`Si è verificato un errore: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Pubblica Tutto su GitHub (API Diretto)';
+      }
+    });
+
+    document.getElementById('btnTestConn').addEventListener('click', fetchTargets);
+    document.getElementById('btnRefresh').addEventListener('click', fetchTargets);
+
+    // Carica target iniziali
+    fetchTargets();
+  </script>
+</body>
+</html>
