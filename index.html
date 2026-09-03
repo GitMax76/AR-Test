@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta charset="utf-8">
-    <title>WebAR Multi-Target Experience</title>
+    <title>AR Experience</title>
 
     <!-- Core A-Frame e MindAR -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -11,43 +11,45 @@
 
     <style>
       :root {
-        --primary: #2563eb;
-        --primary-hover: #1d4ed8;
-        --bg-dark: #0f172a;
-        --surface-glass: rgba(15, 23, 42, 0.75);
-        --border-glass: rgba(255, 255, 255, 0.18);
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
+        --primary: #3b82f6;
+        --accent: #60a5fa;
+        --neon-glow: rgba(59, 130, 246, 0.5);
+        --bg-overlay: radial-gradient(circle at 50% 40%, #172554 0%, #090d16 85%);
+        --glass-bg: rgba(15, 23, 42, 0.65);
+        --glass-border: rgba(255, 255, 255, 0.15);
       }
 
       * {
         box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
       }
 
       body {
-        margin: 0;
         overflow: hidden;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        background-color: #000;
-        color: var(--text-main);
+        background-color: #050811;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         user-select: none;
         -webkit-user-select: none;
+        width: 100vw;
+        height: 100vh;
       }
 
-      /* Schermata Overlay Iniziale */
+      /* ===================================================
+         SCHERMATA INIZIALE (VISUAL-FIRST, SENZA TESTI)
+         =================================================== */
       #startOverlay {
         position: fixed;
         inset: 0;
-        background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%);
-        color: var(--text-main);
+        background: var(--bg-overlay);
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
+        padding: calc(env(safe-area-inset-top, 24px) + 20px) 24px calc(env(safe-area-inset-bottom, 24px) + 30px);
         z-index: 2000;
-        padding: 24px;
-        text-align: center;
-        transition: opacity 0.4s ease, visibility 0.4s ease;
+        transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
       }
 
       #startOverlay.hidden {
@@ -56,298 +58,450 @@
         pointer-events: none;
       }
 
-      .overlay-icon {
-        width: 64px;
-        height: 64px;
-        margin-bottom: 16px;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
-      }
-
-      .overlay-icon svg {
-        width: 34px;
-        height: 34px;
-        fill: white;
-      }
-
-      #startOverlay h1 {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin: 0 0 10px 0;
-        letter-spacing: -0.02em;
-      }
-
-      #startOverlay p {
-        font-size: 0.95rem;
-        color: var(--text-muted);
-        max-width: 340px;
-        line-height: 1.5;
-        margin: 0 0 24px 0;
-      }
-
-      .targets-preview-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 14px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--border-glass);
-        border-radius: 9999px;
-        font-size: 0.82rem;
-        color: #cbd5e1;
-        margin-bottom: 28px;
-      }
-
-      .btn-start {
-        padding: 15px 36px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 9999px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.5);
-        transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+      /* Logo / Indicatore AR in alto */
+      .top-brand {
         display: flex;
         align-items: center;
         gap: 10px;
-      }
-
-      .btn-start:hover:not(:disabled) {
-        background: var(--primary-hover);
-        transform: translateY(-1px);
-        box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.6);
-      }
-
-      .btn-start:active:not(:disabled) {
-        transform: scale(0.97);
-      }
-
-      .btn-start:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      .camera-hint {
-        margin-top: 18px;
-        font-size: 0.78rem;
-        color: #64748b;
-      }
-
-      /* Controlli Fluttuanti UI */
-      .ui-container {
-        position: fixed;
-        bottom: 24px;
-        left: 0;
-        right: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 14px;
-        z-index: 1000;
-        pointer-events: none;
-      }
-
-      .target-indicator {
-        background: var(--surface-glass);
+        padding: 8px 18px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 9999px;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--border-glass);
-        color: #fff;
-        padding: 8px 18px;
-        border-radius: 30px;
-        font-size: 13px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 8px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        opacity: 0;
-        transform: translateY(10px);
-        transition: opacity 0.25s ease, transform 0.25s ease;
-        pointer-events: auto;
       }
 
-      .target-indicator.visible {
-        opacity: 1;
-        transform: translateY(0);
+      .top-brand svg {
+        width: 22px;
+        height: 22px;
+        fill: var(--accent);
       }
 
-      .target-indicator .pulse-dot {
-        width: 8px;
-        height: 8px;
-        background-color: #22c55e;
+      .top-brand-dot {
+        width: 6px;
+        height: 6px;
+        background: #22c55e;
         border-radius: 50%;
         box-shadow: 0 0 8px #22c55e;
       }
 
-      .actions-bar {
+      /* Animazione Centrale: Carta / Foto che viene scansionata e attiva il video */
+      .hero-animation {
+        position: relative;
+        width: 260px;
+        height: 260px;
         display: flex;
         align-items: center;
-        gap: 12px;
-        pointer-events: auto;
+        justify-content: center;
       }
 
-      .btn-ar {
-        padding: 12px 20px;
-        background: var(--surface-glass);
-        color: #fff;
-        border: 1px solid var(--border-glass);
-        border-radius: 30px;
-        font-size: 14px;
-        font-weight: 600;
+      .card-target-visual {
+        width: 140px;
+        height: 180px;
+        border-radius: 16px;
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 2px solid rgba(96, 165, 250, 0.4);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        transform: perspective(600px) rotateX(15deg);
+        animation: cardFloat 3.5s ease-in-out infinite;
+      }
+
+      @keyframes cardFloat {
+        0%, 100% { transform: perspective(600px) rotateX(15deg) translateY(0); }
+        50% { transform: perspective(600px) rotateX(15deg) translateY(-8px); }
+      }
+
+      /* Pattern geometrico sulla carta che evoca un target da gioco */
+      .card-inner-pattern {
+        width: 90px;
+        height: 120px;
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .card-inner-pattern::after {
+        content: '';
+        position: absolute;
+        width: 32px;
+        height: 32px;
+        border: 2px solid var(--accent);
+        border-radius: 50%;
+        opacity: 0.7;
+      }
+
+      /* Raggio laser di scansione animato */
+      .scan-beam {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #60a5fa, #38bdf8, transparent);
+        box-shadow: 0 0 12px #38bdf8;
+        animation: scanMove 2.2s ease-in-out infinite;
+      }
+
+      @keyframes scanMove {
+        0% { top: 0%; opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
+      }
+
+      /* Ologramma Video Pop-up sopra la carta */
+      .hologram-icon {
+        position: absolute;
+        top: 15px;
+        right: 25px;
+        width: 44px;
+        height: 44px;
+        background: rgba(37, 99, 235, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+        backdrop-filter: blur(8px);
+        animation: holoPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes holoPulse {
+        0%, 100% { transform: scale(1) translateY(0); box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5); }
+        50% { transform: scale(1.08) translateY(-4px); box-shadow: 0 12px 30px rgba(59, 130, 246, 0.8); }
+      }
+
+      .hologram-icon svg {
+        width: 22px;
+        height: 22px;
+        fill: #fff;
+        margin-left: 2px;
+      }
+
+      /* Pulsante Grande di Avvio Fotocamera (Universale) */
+      .btn-launch {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6), 0 0 0 8px rgba(59, 130, 246, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        outline: none;
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+        animation: ringPulse 2.5s infinite;
+      }
+
+      @keyframes ringPulse {
+        0% { box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6), 0 0 0 0 rgba(59, 130, 246, 0.3); }
+        70% { box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6), 0 0 0 18px rgba(59, 130, 246, 0); }
+        100% { box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6), 0 0 0 0 rgba(59, 130, 246, 0); }
+      }
+
+      .btn-launch:active {
+        transform: scale(0.92);
+      }
+
+      .btn-launch svg {
+        width: 34px;
+        height: 34px;
+        fill: #ffffff;
+      }
+
+      /* ===================================================
+         INTERFACCIA IN-AR (DURANTE L'USO)
+         =================================================== */
+      
+      /* Mirino Olografico di Scansione (Attivo durante la ricerca del target) */
+      #scanReticle {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        transition: opacity 0.35s ease;
+      }
+
+      #scanReticle.detected {
+        opacity: 0;
+      }
+
+      .reticle-box {
+        width: 220px;
+        height: 280px;
+        max-width: 65vw;
+        max-height: 50vh;
+        position: relative;
+      }
+
+      /* Angoli del mirino */
+      .corner {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-color: #60a5fa;
+        border-style: solid;
+      }
+
+      .top-left { top: 0; left: 0; border-width: 3px 0 0 3px; border-top-left-radius: 12px; }
+      .top-right { top: 0; right: 0; border-width: 3px 3px 0 0; border-top-right-radius: 12px; }
+      .bottom-left { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-bottom-left-radius: 12px; }
+      .bottom-right { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-bottom-right-radius: 12px; }
+
+      .reticle-laser {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+        box-shadow: 0 0 10px #38bdf8;
+        animation: reticleScan 2s ease-in-out infinite;
+      }
+
+      @keyframes reticleScan {
+        0% { top: 5%; opacity: 0; }
+        20% { opacity: 0.9; }
+        80% { opacity: 0.9; }
+        100% { top: 95%; opacity: 0; }
+      }
+
+      /* Barra Superiore / Controlli Fluttuanti In-AR */
+      .ar-hud-top {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 20px) + 12px);
+        left: 18px;
+        right: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+        pointer-events: none;
+      }
+
+      /* Pillola di stato target (Solo icona e feedback visivo) */
+      .status-pill {
+        pointer-events: auto;
         display: flex;
         align-items: center;
         gap: 8px;
-        transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+        padding: 8px 14px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 30px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       }
 
-      .btn-ar:hover {
-        background: rgba(30, 41, 59, 0.9);
-        border-color: rgba(255, 255, 255, 0.3);
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #94a3b8;
+        transition: background-color 0.25s, box-shadow 0.25s;
       }
 
-      .btn-ar:active {
-        transform: scale(0.95);
+      .status-pill.active .status-dot {
+        background: #22c55e;
+        box-shadow: 0 0 10px #22c55e;
       }
 
-      .btn-ar.active {
-        background: rgba(37, 99, 235, 0.85);
+      .status-pill svg {
+        width: 16px;
+        height: 16px;
+        fill: #cbd5e1;
+      }
+
+      /* Tasto Audio Universale (Solo Icona Mute / Unmute) */
+      .btn-audio {
+        pointer-events: auto;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        outline: none;
+        transition: transform 0.15s ease, background-color 0.2s, border-color 0.2s;
+      }
+
+      .btn-audio:active {
+        transform: scale(0.92);
+      }
+
+      .btn-audio.unmuted {
+        background: rgba(37, 99, 235, 0.75);
         border-color: rgba(96, 165, 250, 0.6);
+      }
+
+      .btn-audio svg {
+        width: 22px;
+        height: 22px;
+        fill: #fff;
       }
     </style>
   </head>
   <body>
 
-    <!-- Overlay iniziale di avvio per autorizzazioni e autoplay -->
+    <!-- ==============================================
+         OVERLAY INIZIALE (VISIVO / LINGUA AGNOSTICO)
+         ============================================== -->
     <div id="startOverlay">
-      <div class="overlay-icon">
+      <!-- Indicatore AR in alto -->
+      <div class="top-brand">
         <svg viewBox="0 0 24 24">
           <path d="M4 6V4h4V2H4a2 2 0 0 0-2 2v4h2V6zm14-4h-4v2h4v2h2V4a2 2 0 0 0-2-2zM2 18v-4H0v4a2 2 0 0 0 2 2h4v-2H2zm18 0h-4v2h4a2 2 0 0 0 2-2v-4h-2v4zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
         </svg>
-      </div>
-      <h1>Esperienza WebAR</h1>
-      <p>Inquadra l'immagine con la fotocamera per riprodurre il video associato in realtà aumentata.</p>
-      
-      <div id="targetsBadge" class="targets-preview-badge">
-        Caricamento configurazione...
+        <span class="top-brand-dot"></span>
       </div>
 
-      <button class="btn-start" id="startBtn" disabled>
-        <span>Avvia Esperienza</span>
+      <!-- Illustrazione / Animazione del concept: inquadra la carta per il video -->
+      <div class="hero-animation">
+        <div class="card-target-visual">
+          <div class="card-inner-pattern"></div>
+          <div class="scan-beam"></div>
+        </div>
+        <!-- Icona Play Olografica -->
+        <div class="hologram-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Pulsante Rotondo Universale di Avvio -->
+      <button class="btn-launch" id="startBtn" aria-label="Start AR">
+        <svg viewBox="0 0 24 24">
+          <path d="M9.5 6.5v11l9-5.5z"/>
+        </svg>
       </button>
-      <span class="camera-hint">Richiede l'autorizzazione all'uso della fotocamera</span>
     </div>
 
-    <!-- Controlli a schermo UI -->
-    <div class="ui-container">
-      <div id="targetIndicator" class="target-indicator">
-        <span class="pulse-dot"></span>
-        <span id="targetNameLabel">Target Rilevato</span>
+    <!-- ==============================================
+         HUD IN-AR (DURANTE LA FOTOCAMERA)
+         ============================================== -->
+    
+    <!-- Barra Superiore Fluttuante -->
+    <div class="ar-hud-top">
+      <!-- Indicatore di stato rilevamento (Grigio = ricerca, Verde = agganciato) -->
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot"></span>
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/>
+        </svg>
       </div>
 
-      <div class="actions-bar">
-        <button id="muteButton" class="btn-ar">
-          <span id="muteIcon">🔇</span>
-          <span id="muteLabel">Audio: Disattivato</span>
-        </button>
+      <!-- Pulsante Audio Toggle Universale (Mute / Unmute con icone SVG) -->
+      <button class="btn-audio" id="audioToggle" aria-label="Toggle Audio">
+        <!-- Icona Audio Mute (Default) -->
+        <svg id="iconMuted" viewBox="0 0 24 24">
+          <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+        </svg>
+        <!-- Icona Audio On (Nascosta inizialmente) -->
+        <svg id="iconUnmuted" viewBox="0 0 24 24" style="display:none;">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mirino Grafico Scanner (Mostrato finché l'utente non inquadra il target) -->
+    <div id="scanReticle">
+      <div class="reticle-box">
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+        <div class="reticle-laser"></div>
       </div>
     </div>
 
-    <!-- Scena MindAR -->
+    <!-- ==============================================
+         SCENA A-FRAME & MINDAR
+         ============================================== -->
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: yes;" 
+      mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false">
 
-      <!-- Asset container generato dinamicamente -->
+      <!-- Contenitore video dinamico -->
       <a-assets id="arAssets">
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Le a-entity mindar-image-target verranno inserite a runtime da targets.json -->
+      <!-- Target aggiunti a runtime tramite targets.json -->
 
     </a-scene>
 
     <script>
-      // Elementi UI
+      // Riferimenti DOM
       const startOverlay = document.getElementById('startOverlay');
       const startBtn = document.getElementById('startBtn');
-      const targetsBadge = document.getElementById('targetsBadge');
-      const muteButton = document.getElementById('muteButton');
-      const muteIcon = document.getElementById('muteIcon');
-      const muteLabel = document.getElementById('muteLabel');
-      const targetIndicator = document.getElementById('targetIndicator');
-      const targetNameLabel = document.getElementById('targetNameLabel');
+      const audioToggle = document.getElementById('audioToggle');
+      const iconMuted = document.getElementById('iconMuted');
+      const iconUnmuted = document.getElementById('iconUnmuted');
+      const scanReticle = document.getElementById('scanReticle');
+      const statusPill = document.getElementById('statusPill');
 
-      // Elementi A-Frame
       const sceneEl = document.querySelector('a-scene');
       const assetsEl = document.getElementById('arAssets');
 
-      // Stato dell'applicazione
+      // Stato Applicazione
       let isAudioMuted = true;
       let targetsData = [];
       let activeTargetItem = null;
-      const targetEntitiesMap = new Map();
-      const videoElementsList = [];
+      const videoElements = [];
 
-      // Mostra / Nascondi notifica target
-      function showTargetNotification(name) {
-        targetNameLabel.textContent = `🎯 ${name}`;
-        targetIndicator.classList.add('visible');
-      }
-
-      function hideTargetNotification() {
-        targetIndicator.classList.remove('visible');
-      }
-
-      // Aggiorna stato pulsante Mute
-      function updateMuteButtonUI() {
+      // Gestione Grafica Audio Toggle
+      function updateAudioUI() {
         if (isAudioMuted) {
-          muteIcon.textContent = '🔇';
-          muteLabel.textContent = 'Audio: Disattivato';
-          muteButton.classList.remove('active');
+          iconMuted.style.display = 'block';
+          iconUnmuted.style.display = 'none';
+          audioToggle.classList.remove('unmuted');
         } else {
-          muteIcon.textContent = '🔊';
-          muteLabel.textContent = 'Audio: Attivo';
-          muteButton.classList.add('active');
+          iconMuted.style.display = 'none';
+          iconUnmuted.style.display = 'block';
+          audioToggle.classList.add('unmuted');
         }
       }
 
-      // 1. Caricamento dinamico della configurazione targets.json
-      async function initDynamicTargets() {
+      // 1. Carica la configurazione dinamica dei target
+      async function loadDynamicConfig() {
         try {
-          const response = await fetch('./targets.json', { cache: 'no-cache' });
-          if (!response.ok) {
-            throw new Error(`Impossibile leggere targets.json (Status: ${response.status})`);
-          }
-          targetsData = await response.json();
+          const res = await fetch('./targets.json', { cache: 'no-cache' });
+          if (!res.ok) throw new Error('Failed to load targets.json');
+          targetsData = await res.json();
 
-          if (!Array.isArray(targetsData) || targetsData.length === 0) {
-            targetsBadge.textContent = 'Nessun target configurato in targets.json';
-            return;
-          }
-
-          targetsBadge.textContent = `Target disponibili: ${targetsData.length}`;
-
-          // Creazione dinamica per ogni target configurato
           targetsData.forEach((targetItem) => {
             const index = targetItem.index;
             const videoId = `arVideo-${index}`;
 
-            // 1. Creazione programmatic del tag <video> dentro <a-assets>
+            // Creazione programmatic <video> dentro <a-assets>
             const videoEl = document.createElement('video');
             videoEl.id = videoId;
             videoEl.src = targetItem.videoUrl;
@@ -358,14 +512,14 @@
             videoEl.muted = isAudioMuted;
             videoEl.loop = true;
             assetsEl.appendChild(videoEl);
-            videoElementsList.push(videoEl);
+            videoElements.push(videoEl);
 
-            // 2. Creazione programmatic del tag <a-entity mindar-image-target>
+            // Creazione programmatic <a-entity mindar-image-target>
             const targetEntity = document.createElement('a-entity');
             targetEntity.setAttribute('mindar-image-target', `targetIndex: ${index}`);
             targetEntity.id = `targetEntity-${index}`;
 
-            // 3. Creazione del piano <a-video>
+            // Creazione programmatic <a-video>
             const videoPlane = document.createElement('a-video');
             videoPlane.id = `videoPlane-${index}`;
             videoPlane.setAttribute('src', `#${videoId}`);
@@ -377,98 +531,83 @@
 
             sceneEl.appendChild(targetEntity);
 
-            // Calcolo e adattamento proporzioni dinamiche video
-            const adjustAspectRatio = () => {
+            // Adattamento proporzioni dinamico quando il video è pronto
+            const updateAspect = () => {
               if (videoEl.videoWidth && videoEl.videoHeight) {
                 const ratio = videoEl.videoHeight / videoEl.videoWidth;
                 videoPlane.setAttribute('width', '1');
                 videoPlane.setAttribute('height', ratio.toString());
               }
             };
-            videoEl.addEventListener('loadedmetadata', adjustAspectRatio);
+            videoEl.addEventListener('loadedmetadata', updateAspect);
 
-            // Registrazione eventi targetFound e targetLost (Gestione anti-sovrapposizione)
+            // Gestione eventi: Target Riconosciuto
             targetEntity.addEventListener('targetFound', () => {
-              console.log(`[MindAR] Target trovato: #${index} - ${targetItem.name}`);
-
-              // Se un altro video è in esecuzione, mettilo in pausa immediatamente
+              // Ferma eventuale video precedente (anti-sovrapposizione)
               if (activeTargetItem && activeTargetItem.videoEl !== videoEl) {
                 activeTargetItem.videoEl.pause();
               }
 
-              activeTargetItem = {
-                index: index,
-                name: targetItem.name,
-                videoEl: videoEl
-              };
-
-              // Assicura conformità mute
+              activeTargetItem = { index, videoEl };
               videoEl.muted = isAudioMuted;
-              
-              videoEl.play().catch(err => {
-                console.warn(`[Video Play Interrupted on target ${index}]:`, err);
-              });
+              videoEl.play().catch(e => console.warn('Play prevented:', e));
 
-              showTargetNotification(targetItem.name);
+              // Feedback visivo immediato (iconico)
+              scanReticle.classList.add('detected');
+              statusPill.classList.add('active');
             });
 
+            // Gestione eventi: Target Perso
             targetEntity.addEventListener('targetLost', () => {
-              console.log(`[MindAR] Target perso: #${index} - ${targetItem.name}`);
-
               if (activeTargetItem && activeTargetItem.videoEl === videoEl) {
                 videoEl.pause();
                 activeTargetItem = null;
-                hideTargetNotification();
+
+                // Riattiva mirino per guidare l'utente
+                scanReticle.classList.remove('detected');
+                statusPill.classList.remove('active');
               }
             });
-
-            targetEntitiesMap.set(index, { targetEntity, videoEl, videoPlane });
           });
-
-          // Abilita pulsante avvio
-          startBtn.disabled = false;
         } catch (err) {
           console.error('[WebAR Setup Error]', err);
-          targetsBadge.textContent = `Errore di inizializzazione: ${err.message}`;
         }
       }
 
-      // Click sul pulsante di avvio: sblocca le policy multimediali e avvia MindAR
-      startBtn.addEventListener('click', async () => {
+      // Avvio fotocamera e sblocco policy al tap sul pulsante centrale
+      startBtn.addEventListener('click', () => {
         startOverlay.classList.add('hidden');
 
-        // Avvio del motore di tracking MindAR
         try {
           const mindarSystem = sceneEl.systems['mindar-image-system'];
           if (mindarSystem) {
             mindarSystem.start();
           } else {
-            console.warn('mindar-image-system non ancora pronto, attesa evento scene loaded');
             sceneEl.addEventListener('loaded', () => {
               sceneEl.systems['mindar-image-system'].start();
             });
           }
         } catch (err) {
-          console.error('Errore avvio fotocamera MindAR:', err);
+          console.error('MindAR error:', err);
         }
 
-        // Warm-up per sbloccare l'audio context browser
-        videoElementsList.forEach(v => {
+        // Sblocco audio per tutti i video
+        videoElements.forEach(v => {
           v.muted = isAudioMuted;
         });
       });
 
-      // Gestione del Mute / Unmute Globale
-      muteButton.addEventListener('click', () => {
+      // Toggle Audio (Mute / Unmute)
+      audioToggle.addEventListener('click', () => {
         isAudioMuted = !isAudioMuted;
-        videoElementsList.forEach(video => {
+        videoElements.forEach(video => {
           video.muted = isAudioMuted;
         });
-        updateMuteButtonUI();
+        updateAudioUI();
       });
 
-      // Avvia configurazione
-      initDynamicTargets();
+      // Inizializza
+      loadDynamicConfig();
     </script>
   </body>
 </html>
