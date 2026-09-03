@@ -1,0 +1,62 @@
+name: Compile MindAR Targets
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'targets/**'
+      - 'targets.json'
+      - 'compile.js'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compile:
+    name: Compile targets.mind
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install native build dependencies for node-canvas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run MindAR compilation
+        run: npm run compile
+
+      - name: Commit and push compiled targets.mind
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add targets.mind targets.json
+          
+          if git diff --staged --quiet; then
+            echo "Nessuna modifica rilevata nei file compilati."
+          else
+            git commit -m "chore(ar): auto-compile targets.mind [skip ci]"
+            git push origin main
+          fi
