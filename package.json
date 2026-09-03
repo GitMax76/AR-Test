@@ -1,0 +1,22 @@
+{
+  "name": "ar-test",
+  "version": "1.0.0",
+  "description": "Multi-target WebAR with MindAR and A-Frame",
+  "main": "compile.js",
+  "type": "module",
+  "scripts": {
+    "compile": "node compile.js"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "mind-ar": "^1.2.5"
+  },
+  "keywords": [
+    "webar",
+    "mind-ar",
+    "aframe",
+    "augmented-reality"
+  ],
+  "author": "GitMax76",
+  "license": "MIT"
+}
