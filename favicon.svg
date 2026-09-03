@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="neonBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <linearGradient id="accentGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#93c5fd" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+  <rect x="8" y="8" width="496" height="496" rx="120" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="6" />
+
+  <!-- AR Scanner Reticle Corners -->
+  <g stroke="url(#neonBlue)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)">
+    <!-- Top-Left -->
+    <path d="M 120 190 L 120 140 A 20 20 0 0 1 140 120 L 190 120" />
+    <!-- Top-Right -->
+    <path d="M 322 120 L 372 120 A 20 20 0 0 1 392 140 L 392 190" />
+    <!-- Bottom-Left -->
+    <path d="M 120 322 L 120 372 A 20 20 0 0 0 140 392 L 190 392" />
+    <!-- Bottom-Right -->
+    <path d="M 322 392 L 372 392 A 20 20 0 0 0 392 372 L 392 322" />
+  </g>
+
+  <!-- Central AR Floating Card -->
+  <g transform="translate(256, 256)">
+    <!-- Card Base with perspective feel -->
+    <rect x="-70" y="-95" width="140" height="190" rx="18" fill="#1e293b" stroke="url(#neonBlue)" stroke-width="6" opacity="0.9" />
+    <rect x="-50" y="-75" width="100" height="150" rx="10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4" stroke-dasharray="8 6" />
+
+    <!-- Center Play / Hologram Symbol -->
+    <circle cx="0" cy="0" r="38" fill="url(#neonBlue)" filter="url(#glow)" />
+    <polygon points="-8,-16 16,0 -8,16" fill="#ffffff" />
+  </g>
+</svg>
