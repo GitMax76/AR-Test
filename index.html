@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://aframe.io"></script>
+    <script src="https://jsdelivr.net"></script>
+    <style>
+      body { margin: 0; overflow: hidden; }
+      #muteButton {
+        position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+        z-index: 999; padding: 10px 20px; background: #fff; border: none; border-radius: 5px; font-family: sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="muteButton">Attiva Audio</button>
+    <a-scene mindar-image="imageTargetSrc: https://jsdelivr.net; autoStart: true; uiLoading: no; uiError: no; uiScanning: yes;" 
+             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-assets>
+        <video id="aiVideo" src="https://google.com" 
+               preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
+      </a-assets>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      
+        <a-video src="#aiVideo" width="1" height="0.56" position="0 0 0" rotation="0 0 0"></a-video>
+      
+    </a-scene>
+    <script>
+      const targetEl = document.querySelector('[mindar-image-target]');
+      const video = document.querySelector('#aiVideo');
+      const muteButton = document.getElementById('muteButton');
+      targetEl.addEventListener("targetFound", event => { video.play(); });
+      targetEl.addEventListener("targetLost", event => { video.pause(); });
+      muteButton.addEventListener('click', () => {
+        video.muted = !video.muted;
+        muteButton.innerText = video.muted ? "Attiva Audio" : "Disattiva Audio";
+      });
+      video.muted = true;
+    </script>
+  </body>
+</html>
