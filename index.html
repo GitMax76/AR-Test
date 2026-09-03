@@ -3,11 +3,10 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <title>WebAR Experience - MindAR</title>
+    <title>AR Experience</title>
 
-    <!-- Core A-Frame 1.4.2 -->
+    <!-- Core A-Frame e MindAR -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <!-- MindAR Image Tracking per A-Frame 1.2.5 -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
@@ -17,7 +16,7 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
 
-      /* Barra comandi UI */
+      /* Controlli a schermo */
       .ui-container {
         position: fixed;
         bottom: 24px;
@@ -35,25 +34,25 @@
         padding: 12px 24px;
         background: rgba(20, 20, 20, 0.85);
         color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 30px;
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        transition: transform 0.15s ease, background-color 0.2s ease;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        transition: transform 0.1s ease, background 0.2s ease;
       }
 
       .btn-ar:active {
         transform: scale(0.95);
       }
 
-      /* Schermata di avvio obbligatoria per policy autoplay mobili */
+      /* Schermata iniziale per sblocco permessi e autoplay */
       #startOverlay {
         position: fixed;
         inset: 0;
-        background: #0f1115;
+        background: #11141a;
         color: #ffffff;
         display: flex;
         flex-direction: column;
@@ -65,14 +64,15 @@
       }
 
       #startOverlay h1 {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         margin-bottom: 8px;
       }
 
       #startOverlay p {
         font-size: 0.95rem;
-        color: #9ca3af;
+        color: #94a3b8;
         max-width: 320px;
+        line-height: 1.4;
         margin-bottom: 24px;
       }
 
@@ -85,25 +85,25 @@
         font-size: 16px;
         font-weight: 600;
         cursor: pointer;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
       }
     </style>
   </head>
   <body>
 
-    <!-- Overlay di benvenuto per sbloccare l'audio e la fotocamera -->
+    <!-- Overlay iniziale -->
     <div id="startOverlay">
-      <h1>Esperienza AR</h1>
-      <p>Inquadra l'immagine target con la fotocamera per vedere il contenuto.</p>
+      <h1>Inizia Esperienza AR</h1>
+      <p>Consenti l'accesso alla fotocamera e inquadra l'immagine per riprodurre il video.</p>
       <button class="btn-start" id="startBtn">Avvia Fotocamera</button>
     </div>
 
-    <!-- Controlli a schermo durante l'AR -->
+    <!-- UI Overlay per l'audio -->
     <div class="ui-container">
       <button id="muteButton" class="btn-ar">Attiva Audio</button>
     </div>
 
-    <!-- Scena WebAR -->
-    <!-- NOTA: Sostituisci "targets.mind" con il percorso relativo del tuo file compilato -->
+    <!-- Scena MindAR -->
     <a-scene 
       mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: yes;" 
       color-space="sRGB" 
@@ -112,10 +112,10 @@
       device-orientation-permission-ui="enabled: false">
 
       <a-assets>
-        <!-- Inserisci qui il path del tuo video (es. ./video.mp4) -->
+        <!-- Video hostato su Cloudinary con crossorigin attivo -->
         <video 
-          id="aiVideo" 
-          src="./video.mp4" 
+          id="arVideo" 
+          src="https://res.cloudinary.com/h0ch4sxd/video/upload/v1788443837/v24044gl0000d7vo42fog65gfgphs5mg.mp4" 
           preload="auto" 
           loop="true" 
           crossorigin="anonymous" 
@@ -127,13 +127,13 @@
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Target 0 configurato correttamente con all'interno l'elemento video -->
-      <a-entity id="markerTarget" mindar-image-target="targetIndex: 0">
-        <!-- Dimensioni 16:9 proporzionate (width 1, height 0.5625) -->
+      <!-- Target 0 collegato al marker compilato -->
+      <a-entity id="targetMarker" mindar-image-target="targetIndex: 0">
         <a-video 
-          src="#aiVideo" 
+          id="videoPlane"
+          src="#arVideo" 
           width="1" 
-          height="0.5625" 
+          height="1" 
           position="0 0 0" 
           rotation="0 0 0">
         </a-video>
@@ -143,20 +143,30 @@
 
     <script>
       const sceneEl = document.querySelector('a-scene');
-      const targetEl = document.querySelector('#markerTarget');
-      const video = document.querySelector('#aiVideo');
+      const targetMarker = document.querySelector('#targetMarker');
+      const video = document.querySelector('#arVideo');
+      const videoPlane = document.querySelector('#videoPlane');
       const muteButton = document.getElementById('muteButton');
       const startOverlay = document.getElementById('startOverlay');
       const startBtn = document.getElementById('startBtn');
 
-      // Avvio controllato dell'esperienza (essenziale per iOS Safari / Chrome Android)
+      // Calcola e adatta le proporzioni (width/height) appena i metadata del video sono pronti
+      video.addEventListener('loadedmetadata', () => {
+        if (video.videoWidth && video.videoHeight) {
+          const ratio = video.videoHeight / video.videoWidth;
+          videoPlane.setAttribute('width', 1);
+          videoPlane.setAttribute('height', ratio);
+        }
+      });
+
+      // Click sul pulsante iniziale: avvia AR e sblocca l'autoplay del video
       startBtn.addEventListener('click', () => {
         startOverlay.style.display = 'none';
-        
-        // Avvia il motore MindAR
+
+        // Avvio del sistema MindAR
         sceneEl.systems["mindar-image-system"].start();
 
-        // Preriscalda il video in muto per aggirare il blocco browser
+        // Warm-up del flusso video per policy iOS/Android
         video.play().then(() => {
           video.pause();
         }).catch(err => {
@@ -164,16 +174,16 @@
         });
       });
 
-      // Gestione comparsa / scomparsa target
-      targetEl.addEventListener("targetFound", () => {
+      // Eventi di tracking del marker
+      targetMarker.addEventListener("targetFound", () => {
         video.play();
       });
 
-      targetEl.addEventListener("targetLost", () => {
+      targetMarker.addEventListener("targetLost", () => {
         video.pause();
       });
 
-      // Toggle Mute Audio
+      // Gestione Mute / Unmute
       muteButton.addEventListener('click', () => {
         video.muted = !video.muted;
         muteButton.innerText = video.muted ? "Attiva Audio" : "Disattiva Audio";
