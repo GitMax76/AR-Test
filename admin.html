@@ -429,12 +429,45 @@
             </div>
 
             <div id="previewBox" class="preview-box">
-              <img id="previewImg" src="" alt="Anteprima">
+              <div style="position:relative; display:inline-block;">
+                <img id="previewImg" src="" alt="Anteprima" style="max-width:100px; max-height:100px; display:block;">
+                <canvas id="featureCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></canvas>
+              </div>
               <div style="flex:1; min-width:0;">
                 <div id="previewName" style="font-weight:600; font-size:0.85rem;">filename.jpg</div>
                 <div id="previewSize" style="font-size:0.75rem; color:var(--text-muted);">0 KB</div>
               </div>
               <button class="btn-danger-sm" id="btnRemoveImg">Rimuovi</button>
+            </div>
+
+            <!-- Analizzatore & Miglioratore Qualità AR -->
+            <div id="arAnalysisBox" style="display:none; background: #0b1120; border: 1px solid var(--card-border); border-radius: 8px; padding: 14px; margin-top: 12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-weight:600; font-size:0.88rem; color:#38bdf8; display:flex; align-items:center; gap:6px;">
+                  🔍 Analizzatore Qualità AR
+                </span>
+                <span id="arScoreBadge" class="badge-status" style="background:rgba(59,130,246,0.2); color:#60a5fa;">Valutazione in corso...</span>
+              </div>
+              
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.78rem; color:var(--text-muted); margin-bottom:10px; background:rgba(0,0,0,0.2); padding:8px; border-radius:6px;">
+                <div>Punti Tracciamento: <strong id="arPointsCount" style="color:#fff;">0</strong></div>
+                <div>Distribuzione: <strong id="arDistScore" style="color:#fff;">-</strong></div>
+                <div>Risoluzione: <strong id="arResScore" style="color:#fff;">-</strong></div>
+                <div>Punteggio: <strong id="arStarRating" style="color:#f59e0b;">-</strong></div>
+              </div>
+
+              <div id="arAdviceText" style="font-size:0.78rem; background:rgba(255,255,255,0.05); padding:8px 10px; border-radius:6px; margin-bottom:12px; border-left:3px solid #3b82f6;">
+                Caricamento analisi...
+              </div>
+
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-outline" id="btnEnhanceContrast" style="padding:6px 10px; font-size:0.78rem; flex:1; white-space:nowrap;">
+                  🪄 Migliora Nitidezza & Contrasto
+                </button>
+                <button type="button" class="btn btn-primary" id="btnAddMiCFrame" style="padding:6px 10px; font-size:0.78rem; flex:1; white-space:nowrap;">
+                  🖼️ Aggiungi Cornice MiC
+                </button>
+              </div>
             </div>
           </div>
 
@@ -638,6 +671,10 @@
           const cleanName = file.name.replace(/\.[^/.]+$/, "");
           newTargetNameInput.value = `Target ${targets.length + 1} (${cleanName})`;
         }
+
+        previewImg.onload = () => {
+          analyzeImageAR(previewImg);
+        };
       };
       reader.readAsDataURL(file);
     }
@@ -647,8 +684,185 @@
       selectedImageBase64 = null;
       fileInput.value = '';
       previewBox.style.display = 'none';
+      document.getElementById('arAnalysisBox').style.display = 'none';
       dropzone.style.display = 'block';
     });
+
+    // --- ANALIZZATORE & MIGLIORATORE QUALITÀ AR ---
+    function analyzeImageAR(imgElement) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const w = imgElement.naturalWidth || imgElement.width || 300;
+      const h = imgElement.naturalHeight || imgElement.height || 300;
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(imgElement, 0, 0, w, h);
+
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      // Grayscale conversion
+      const gray = new Uint8Array(w * h);
+      for (let i = 0; i < data.length; i += 4) {
+        gray[i / 4] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+      }
+
+      // Feature Detection (High-contrast gradients in grid cells)
+      const step = Math.max(3, Math.floor(Math.min(w, h) / 90));
+      const featurePoints = [];
+      const gridCount = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+      for (let y = step; y < h - step; y += step) {
+        for (let x = step; x < w - step; x += step) {
+          const idx = y * w + x;
+          const gx = Math.abs(gray[idx + 1] - gray[idx - 1]);
+          const gy = Math.abs(gray[idx + w] - gray[idx - w]);
+          const mag = gx + gy;
+
+          if (mag > 60) {
+            featurePoints.push({ x, y, mag });
+            const gxIdx = Math.min(2, Math.floor((x / w) * 3));
+            const gyIdx = Math.min(2, Math.floor((y / h) * 3));
+            gridCount[gyIdx * 3 + gxIdx]++;
+          }
+        }
+      }
+
+      const totalPoints = featurePoints.length;
+      const activeCells = gridCount.filter(c => c > 5).length;
+      const isResGood = w >= 600 && h >= 600;
+
+      let stars = 1;
+      if (totalPoints > 280 && activeCells >= 7 && isResGood) stars = 5;
+      else if (totalPoints > 180 && activeCells >= 5) stars = 4;
+      else if (totalPoints > 80 && activeCells >= 3) stars = 3;
+      else if (totalPoints > 30) stars = 2;
+
+      // Draw green dots on overlay canvas
+      const overlayCanvas = document.getElementById('featureCanvas');
+      overlayCanvas.width = imgElement.clientWidth || 100;
+      overlayCanvas.height = imgElement.clientHeight || 100;
+      const oCtx = overlayCanvas.getContext('2d');
+      oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      const scaleX = overlayCanvas.width / w;
+      const scaleY = overlayCanvas.height / h;
+
+      oCtx.fillStyle = '#10b981';
+      featurePoints.slice(0, 180).forEach(p => {
+        oCtx.beginPath();
+        oCtx.arc(p.x * scaleX, p.y * scaleY, 2, 0, Math.PI * 2);
+        oCtx.fill();
+      });
+
+      document.getElementById('arPointsCount').textContent = `${totalPoints} punti`;
+      document.getElementById('arDistScore').textContent = `${activeCells}/9 zone`;
+      document.getElementById('arResScore').textContent = `${w}x${h} px`;
+      document.getElementById('arStarRating').textContent = '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
+
+      const badge = document.getElementById('arScoreBadge');
+      const advice = document.getElementById('arAdviceText');
+
+      if (stars >= 4) {
+        badge.className = 'badge-status badge-connected';
+        badge.textContent = `Eccellente (${stars}/5 Stars)`;
+        advice.innerHTML = `✅ <strong>Immagine Ottima per l'AR!</strong> Dettagli nitidi e ben distribuiti. Può essere agganciata velocemente dalla fotocamera.`;
+      } else if (stars === 3) {
+        badge.className = 'badge-status';
+        badge.style.background = 'rgba(245,158,11,0.2)';
+        badge.style.color = '#f59e0b';
+        badge.textContent = `Buono (${stars}/5 Stars)`;
+        advice.innerHTML = `⚠️ <strong>Qualità Accettabile.</strong> I punti di tracciamento sono sufficienti. Clicca <em>"Migliora Nitidezza & Contrasto"</em> per aumentarne la stabilità.`;
+      } else {
+        badge.className = 'badge-status badge-disconnected';
+        badge.textContent = `Scarso (${stars}/5 Stars)`;
+        advice.innerHTML = `❌ <strong>Tracciamento Difficile.</strong> Pochi spigoli o parti scure. Clicca <em>"Aggiungi Cornice MiC"</em> per garantire un aggancio stello al 100%!`;
+      }
+
+      document.getElementById('arAnalysisBox').style.display = 'block';
+    }
+
+    document.getElementById('btnEnhanceContrast').addEventListener('click', () => {
+      if (!previewImg.src) return;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const w = previewImg.naturalWidth;
+      const h = previewImg.naturalHeight;
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(previewImg, 0, 0, w, h);
+
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const d = imgData.data;
+
+      const contrast = 1.35;
+      const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = Math.min(255, Math.max(0, factor * (d[i] - 128) + 128));
+        d[i+1] = Math.min(255, Math.max(0, factor * (d[i+1] - 128) + 128));
+        d[i+2] = Math.min(255, Math.max(0, factor * (d[i+2] - 128) + 128));
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      const newBase64 = canvas.toDataURL('image/jpeg', 0.92);
+      updateLoadedImage(newBase64);
+      log('✨ Applicato miglioramento contrasto e nitidezza all\'immagine.');
+    });
+
+    document.getElementById('btnAddMiCFrame').addEventListener('click', () => {
+      if (!previewImg.src) return;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const origW = previewImg.naturalWidth;
+      const origH = previewImg.naturalHeight;
+
+      const borderX = Math.round(origW * 0.08);
+      const headerH = Math.round(origH * 0.16);
+      const footerH = Math.round(origH * 0.16);
+
+      const totalW = origW + borderX * 2;
+      const totalH = origH + headerH + footerH;
+
+      canvas.width = totalW;
+      canvas.height = totalH;
+
+      // MiC Blue Background (#2D489D)
+      ctx.fillStyle = '#2D489D';
+      ctx.fillRect(0, 0, totalW, totalH);
+
+      // Inset Frame Line
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(4, Math.round(totalW * 0.008));
+      ctx.strokeRect(borderX / 2, borderX / 2, totalW - borderX, totalH - borderX);
+
+      // Draw Photo Centered
+      ctx.drawImage(previewImg, borderX, headerH, origW, origH);
+
+      // Header Text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.round(totalW * 0.045)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.textAlign = 'center';
+      const targetName = newTargetNameInput.value.trim() || 'TARGET AR';
+      ctx.fillText(targetName.toUpperCase(), totalW / 2, headerH * 0.65);
+
+      // Footer Badge
+      ctx.font = `bold ${Math.round(totalW * 0.032)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.fillText('📷 INQUADRA CON LA FOTOCAMERA PER IL VIDEO AR', totalW / 2, totalH - (footerH * 0.45));
+
+      const newBase64 = canvas.toDataURL('image/jpeg', 0.92);
+      updateLoadedImage(newBase64);
+      log('🖼️ Cornice Istituzionale MiC applicata all\'immagine.');
+    });
+
+    function updateLoadedImage(dataUrl) {
+      previewImg.src = dataUrl;
+      selectedImageBase64 = dataUrl.split(',')[1];
+      previewImg.onload = () => {
+        analyzeImageAR(previewImg);
+      };
+    }
 
     // Aggiungi a Lista Locale
     document.getElementById('btnAddToList').addEventListener('click', () => {
