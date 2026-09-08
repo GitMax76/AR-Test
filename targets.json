@@ -7,8 +7,8 @@
   },
   {
     "index": 1,
-    "name": "San Pietro a Corte - TEST",
-    "imagePath": "./targets/02.webp",
+    "name": "San Pietro AR test",
+    "imagePath": "./targets/02.jpg",
     "videoUrl": "https://res.cloudinary.com/h0ch4sxd/video/upload/v1788865423/Photorealistic_historical_time.mp4"
   }
 ]
