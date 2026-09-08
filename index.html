@@ -530,7 +530,7 @@
             const videoEl = document.createElement('video');
             videoEl.id = videoId;
             videoEl.src = targetItem.videoUrl;
-            videoEl.setAttribute('preload', 'none');
+            videoEl.setAttribute('preload', 'metadata');
             videoEl.setAttribute('crossorigin', 'anonymous');
             videoEl.setAttribute('playsinline', '');
             videoEl.setAttribute('webkit-playsinline', '');
@@ -599,9 +599,18 @@
         }
       }
 
+      const configPromise = loadDynamicConfig();
+
       // Avvio fotocamera e sblocco policy al tap sul pulsante centrale
-      startBtn.addEventListener('click', () => {
+      startBtn.addEventListener('click', async () => {
+        await configPromise;
         startOverlay.classList.add('hidden');
+
+        // Sblocco e pre-caricamento audio/video per iOS Safari e Android Chrome
+        videoElements.forEach(v => {
+          v.muted = isAudioMuted;
+          v.load();
+        });
 
         try {
           const mindarSystem = sceneEl.systems['mindar-image-system'];
@@ -615,11 +624,6 @@
         } catch (err) {
           console.error('MindAR error:', err);
         }
-
-        // Sblocco audio per tutti i video
-        videoElements.forEach(v => {
-          v.muted = isAudioMuted;
-        });
       });
 
       // Toggle Audio (Mute / Unmute)
@@ -630,9 +634,6 @@
         });
         updateAudioUI();
       });
-
-      // Inizializza
-      loadDynamicConfig();
     </script>
   </body>
 </html>
