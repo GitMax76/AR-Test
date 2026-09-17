@@ -387,6 +387,58 @@
         height: 22px;
         fill: #fff;
       }
+
+      /* Slider Opacità 3D / 360 ("Ieri vs Oggi") */
+      .ar-hud-bottom {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
+        left: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 1000;
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+
+      .ar-hud-bottom.hidden {
+        opacity: 0;
+        transform: translateY(20px);
+        pointer-events: none;
+      }
+
+      .slider-container {
+        pointer-events: auto;
+        width: 100%;
+        max-width: 320px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 10px 18px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #cbd5e1;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .slider-input {
+        width: 100%;
+        accent-color: var(--primary);
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -452,6 +504,17 @@
       </button>
     </div>
 
+    <!-- Slider Fluttuante "Ieri vs Oggi" per Modelli 3D e 360 -->
+    <div class="ar-hud-bottom hidden" id="arHudBottom">
+      <div class="slider-container">
+        <div class="slider-labels">
+          <span>🏛️ Passato (3D)</span>
+          <span>👁️ Presente (Real)</span>
+        </div>
+        <input type="range" id="opacitySlider" class="slider-input" min="0.05" max="1" step="0.05" value="0.9">
+      </div>
+    </div>
+
     <!-- Mirino Grafico Scanner (Mostrato finché l'utente non inquadra il target) -->
     <div id="scanReticle">
       <div class="reticle-box">
@@ -473,7 +536,7 @@
       vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false">
 
-      <!-- Contenitore video dinamico -->
+      <!-- Contenitore video e 3D dinamico -->
       <a-assets id="arAssets">
       </a-assets>
 
@@ -492,6 +555,8 @@
       const iconUnmuted = document.getElementById('iconUnmuted');
       const scanReticle = document.getElementById('scanReticle');
       const statusPill = document.getElementById('statusPill');
+      const arHudBottom = document.getElementById('arHudBottom');
+      const opacitySlider = document.getElementById('opacitySlider');
 
       const sceneEl = document.querySelector('a-scene');
       const assetsEl = document.getElementById('arAssets');
@@ -515,7 +580,7 @@
         }
       }
 
-      // 1. Carica la configurazione dinamica dei target
+      // 1. Carica la configurazione dinamica dei target (Video, Modelli 3D GLB, Sky 360)
       async function loadDynamicConfig() {
         try {
           const res = await fetch('./targets.json', { cache: 'no-cache' });
@@ -524,71 +589,116 @@
 
           targetsData.forEach((targetItem) => {
             const index = targetItem.index;
-            const videoId = `arVideo-${index}`;
-
-            // Creazione programmatic <video> dentro <a-assets>
-            const videoEl = document.createElement('video');
-            videoEl.id = videoId;
-            videoEl.src = targetItem.videoUrl;
-            videoEl.setAttribute('preload', 'metadata');
-            videoEl.setAttribute('crossorigin', 'anonymous');
-            videoEl.setAttribute('playsinline', '');
-            videoEl.setAttribute('webkit-playsinline', '');
-            videoEl.muted = isAudioMuted;
-            videoEl.loop = true;
-            assetsEl.appendChild(videoEl);
-            videoElements.push(videoEl);
+            const targetType = targetItem.type || (targetItem.modelUrl ? 'model3d' : targetItem.skyUrl ? 'sky360' : 'video');
 
             // Creazione programmatic <a-entity mindar-image-target>
             const targetEntity = document.createElement('a-entity');
             targetEntity.setAttribute('mindar-image-target', `targetIndex: ${index}`);
             targetEntity.id = `targetEntity-${index}`;
 
-            // Creazione programmatic <a-video>
-            const videoPlane = document.createElement('a-video');
-            videoPlane.id = `videoPlane-${index}`;
-            videoPlane.setAttribute('src', `#${videoId}`);
-            videoPlane.setAttribute('width', '1');
-            videoPlane.setAttribute('height', '1');
-            videoPlane.setAttribute('position', '0 0 0');
-            videoPlane.setAttribute('rotation', '0 0 0');
-            targetEntity.appendChild(videoPlane);
+            let videoEl = null;
+            let modelEl = null;
+            let skyEl = null;
+
+            if (targetType === 'video') {
+              const videoId = `arVideo-${index}`;
+              videoEl = document.createElement('video');
+              videoEl.id = videoId;
+              videoEl.src = targetItem.videoUrl || targetItem.mediaUrl;
+              videoEl.setAttribute('preload', 'metadata');
+              videoEl.setAttribute('crossorigin', 'anonymous');
+              videoEl.setAttribute('playsinline', '');
+              videoEl.setAttribute('webkit-playsinline', '');
+              videoEl.muted = isAudioMuted;
+              videoEl.loop = true;
+              assetsEl.appendChild(videoEl);
+              videoElements.push(videoEl);
+
+              const videoPlane = document.createElement('a-video');
+              videoPlane.id = `videoPlane-${index}`;
+              videoPlane.setAttribute('src', `#${videoId}`);
+              videoPlane.setAttribute('width', '1');
+              videoPlane.setAttribute('height', '1');
+              videoPlane.setAttribute('position', '0 0 0');
+              videoPlane.setAttribute('rotation', '0 0 0');
+              targetEntity.appendChild(videoPlane);
+
+              const updateAspect = () => {
+                if (videoEl.videoWidth && videoEl.videoHeight) {
+                  const ratio = videoEl.videoHeight / videoEl.videoWidth;
+                  videoPlane.setAttribute('width', '1');
+                  videoPlane.setAttribute('height', ratio.toString());
+                }
+              };
+              videoEl.addEventListener('loadedmetadata', updateAspect);
+            } else if (targetType === 'model3d') {
+              const assetId = `arModel-${index}`;
+              const assetItem = document.createElement('a-asset-item');
+              assetItem.id = assetId;
+              assetItem.setAttribute('src', targetItem.modelUrl || targetItem.mediaUrl);
+              assetsEl.appendChild(assetItem);
+
+              modelEl = document.createElement('a-gltf-model');
+              modelEl.id = `gltfModel-${index}`;
+              modelEl.setAttribute('src', `#${assetId}`);
+              
+              const pos = targetItem.transform?.position || '0 0 0';
+              const rot = targetItem.transform?.rotation || '0 0 0';
+              const sca = targetItem.transform?.scale || '1 1 1';
+
+              modelEl.setAttribute('position', pos);
+              modelEl.setAttribute('rotation', rot);
+              modelEl.setAttribute('scale', sca);
+              targetEntity.appendChild(modelEl);
+            } else if (targetType === 'sky360') {
+              const skyId = `arSky-${index}`;
+              const imgEl = document.createElement('img');
+              imgEl.id = skyId;
+              imgEl.src = targetItem.skyUrl || targetItem.mediaUrl;
+              imgEl.setAttribute('crossorigin', 'anonymous');
+              assetsEl.appendChild(imgEl);
+
+              skyEl = document.createElement('a-sky');
+              skyEl.id = `skyBox-${index}`;
+              skyEl.setAttribute('src', `#${skyId}`);
+              skyEl.setAttribute('radius', '20');
+              skyEl.setAttribute('opacity', (targetItem.opacity || 0.85).toString());
+              skyEl.setAttribute('transparent', 'true');
+              skyEl.setAttribute('visible', 'false');
+              sceneEl.appendChild(skyEl);
+            }
 
             sceneEl.appendChild(targetEntity);
 
-            // Adattamento proporzioni dinamico quando il video è pronto
-            const updateAspect = () => {
-              if (videoEl.videoWidth && videoEl.videoHeight) {
-                const ratio = videoEl.videoHeight / videoEl.videoWidth;
-                videoPlane.setAttribute('width', '1');
-                videoPlane.setAttribute('height', ratio.toString());
-              }
-            };
-            videoEl.addEventListener('loadedmetadata', updateAspect);
-
             // Gestione eventi: Target Riconosciuto
             targetEntity.addEventListener('targetFound', () => {
-              // Ferma eventuale video precedente (anti-sovrapposizione)
-              if (activeTargetItem && activeTargetItem.videoEl !== videoEl) {
+              if (activeTargetItem && activeTargetItem.videoEl && activeTargetItem.videoEl !== videoEl) {
                 activeTargetItem.videoEl.pause();
               }
 
-              activeTargetItem = { index, videoEl };
-              videoEl.muted = isAudioMuted;
-              videoEl.play().catch(e => console.warn('Play prevented:', e));
+              activeTargetItem = { index, targetType, videoEl, modelEl, skyEl };
 
-              // Feedback visivo immediato (iconico)
+              if (targetType === 'video' && videoEl) {
+                videoEl.muted = isAudioMuted;
+                videoEl.play().catch(e => console.warn('Play prevented:', e));
+                arHudBottom.classList.add('hidden');
+              } else if (targetType === 'model3d' || targetType === 'sky360') {
+                if (skyEl) skyEl.setAttribute('visible', 'true');
+                arHudBottom.classList.remove('hidden');
+              }
+
               scanReticle.classList.add('detected');
               statusPill.classList.add('active');
             });
 
             // Gestione eventi: Target Perso
             targetEntity.addEventListener('targetLost', () => {
-              if (activeTargetItem && activeTargetItem.videoEl === videoEl) {
-                videoEl.pause();
+              if (activeTargetItem && activeTargetItem.index === index) {
+                if (videoEl) videoEl.pause();
+                if (skyEl) skyEl.setAttribute('visible', 'false');
                 activeTargetItem = null;
 
-                // Riattiva mirino per guidare l'utente
+                arHudBottom.classList.add('hidden');
                 scanReticle.classList.remove('detected');
                 statusPill.classList.remove('active');
               }
@@ -634,6 +744,24 @@
         });
         updateAudioUI();
       });
+
+      // Slider Opacità 3D / 360 ("Ieri vs Oggi")
+      opacitySlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (activeTargetItem) {
+          if (activeTargetItem.targetType === 'model3d' && activeTargetItem.modelEl) {
+            activeTargetItem.modelEl.object3D.traverse((node) => {
+              if (node.isMesh && node.material) {
+                node.material.transparent = true;
+                node.material.opacity = val;
+              }
+            });
+          } else if (activeTargetItem.targetType === 'sky360' && activeTargetItem.skyEl) {
+            activeTargetItem.skyEl.setAttribute('opacity', val.toString());
+          }
+        }
+      });
+    </script>
     </script>
   </body>
 </html>

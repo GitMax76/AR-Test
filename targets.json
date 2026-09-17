@@ -1,14 +1,21 @@
 [
   {
     "index": 0,
-    "name": "Ceramista al tornio",
+    "type": "video",
+    "name": "Ceramista al tornio (Video 2D)",
     "imagePath": "./targets/01.jpg",
     "videoUrl": "https://res.cloudinary.com/h0ch4sxd/video/upload/v1788443837/v24044gl0000d7vo42fog65gfgphs5mg.mp4"
   },
   {
     "index": 1,
-    "name": "San Pietro a Corte (MiC AR Target)",
+    "type": "model3d",
+    "name": "Ricostruzione 3D San Pietro a Corte (Modello GLB)",
     "imagePath": "./targets/02.jpg",
-    "videoUrl": "https://res.cloudinary.com/h0ch4sxd/video/upload/v1788865423/Photorealistic_historical_time.mp4"
+    "modelUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Lantern/glTF-Binary/Lantern.glb",
+    "transform": {
+      "position": "0 -0.5 0.5",
+      "rotation": "0 0 0",
+      "scale": "0.15 0.15 0.15"
+    }
   }
 ]

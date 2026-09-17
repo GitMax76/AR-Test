@@ -472,10 +472,40 @@
           </div>
 
           <div class="form-group">
-            <label>URL Video Esterno (Cloudinary / CDN)</label>
-            <input type="url" id="newVideoUrl" placeholder="https://res.cloudinary.com/.../video.mp4">
+            <label>Tipo di Contenuto AR</label>
+            <select id="contentTypeSelect">
+              <option value="video">🎥 Video MP4 (Overlay 2D)</option>
+              <option value="model3d">🧊 Modello 3D Poligonale (.glb)</option>
+              <option value="sky360">🌐 Panorama / Portale 360°</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label id="mediaUrlLabel">URL Asset Media (MP4 / GLB / Image 360)</label>
+            <input type="url" id="newMediaUrl" placeholder="https://res.cloudinary.com/.../file.mp4 o file.glb">
             <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
-              Il video deve essere raggiungibile con CORS abilitato (es. Cloudinary, GitHub raw, o CDN).
+              L'asset deve essere raggiungibile via HTTPS con CORS abilitato (Cloudinary, GitHub Raw, S3, etc.).
+            </div>
+          </div>
+
+          <!-- Parametri Trasformazione 3D (Solo per Modelli 3D) -->
+          <div id="transformFields" style="display:none; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 18px; border: 1px solid var(--card-border);">
+            <div style="font-weight:600; font-size:0.82rem; color:var(--primary); margin-bottom:8px; text-transform:uppercase;">
+              ⚙️ Trasformazioni Modello 3D
+            </div>
+            <div class="input-row" style="margin-bottom:8px;">
+              <div>
+                <label style="font-size:0.75rem;">Posizione X Y Z</label>
+                <input type="text" id="modelPos" value="0 -0.5 0" placeholder="0 -0.5 0">
+              </div>
+              <div>
+                <label style="font-size:0.75rem;">Rotazione X Y Z</label>
+                <input type="text" id="modelRot" value="0 0 0" placeholder="0 0 0">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:0.75rem;">Scala X Y Z</label>
+              <input type="text" id="modelScale" value="1 1 1" placeholder="1 1 1">
             </div>
           </div>
 
@@ -600,6 +630,19 @@
       }
     }
 
+    // Toggle form fields based on selected content type
+    const contentTypeSelect = document.getElementById('contentTypeSelect');
+    const transformFields = document.getElementById('transformFields');
+
+    contentTypeSelect.addEventListener('change', () => {
+      const type = contentTypeSelect.value;
+      if (type === 'model3d') {
+        transformFields.style.display = 'block';
+      } else {
+        transformFields.style.display = 'none';
+      }
+    });
+
     function renderTargets() {
       targetCountEl.textContent = targets.length;
       if (targets.length === 0) {
@@ -613,16 +656,17 @@
         const item = document.createElement('div');
         item.className = 'target-item';
 
-        // Calcola thumbnail path
         const thumbSrc = t.imagePath.startsWith('./') ? t.imagePath : `./${t.imagePath}`;
+        const typeBadge = t.type === 'model3d' ? '🧊 3D MODEL' : t.type === 'sky360' ? '🌐 360 SKY' : '🎥 VIDEO';
+        const mediaLink = t.videoUrl || t.modelUrl || t.skyUrl || t.mediaUrl || '';
 
         item.innerHTML = `
           <div class="target-index-badge">#${t.index}</div>
           <img class="target-thumb" src="${thumbSrc}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'54\\' height=\\'54\\'><rect width=\\'54\\' height=\\'54\\' fill=\\'%23243048\\'/><text x=\\'27\\' y=\\'32\\' fill=\\'%2364748b\\' text-anchor=\\'middle\\' font-size=\\'11\\'>IMG</text></svg>'" alt="${t.name}">
           <div class="target-info">
-            <div class="target-title">${t.name}</div>
+            <div class="target-title">${t.name} <span style="font-size:0.7rem; padding:2px 6px; border-radius:4px; background:rgba(59,130,246,0.2); color:#60a5fa;">${typeBadge}</span></div>
             <div class="target-path">${t.imagePath}</div>
-            <div class="target-path" style="color:#60a5fa;"><a href="${t.videoUrl}" target="_blank" style="color:inherit;text-decoration:none;">🔗 ${t.videoUrl || 'Nessun video associato'}</a></div>
+            <div class="target-path" style="color:#60a5fa;"><a href="${mediaLink}" target="_blank" style="color:inherit;text-decoration:none;">🔗 ${mediaLink || 'Nessun asset associato'}</a></div>
           </div>
           <div class="target-actions">
             <button class="btn-danger-sm" onclick="removeTarget(${idx})">Elimina</button>
@@ -632,267 +676,50 @@
       });
     }
 
-    window.removeTarget = function(index) {
-      if (confirm(`Rimuovere il target #${index} (${targets[index].name})?`)) {
-        targets.splice(index, 1);
-        targets.forEach((t, i) => t.index = i);
-        renderTargets();
-        log(`Rimosso target index ${index}.`);
-      }
-    };
-
-    // Gestione File Drop / Selezione
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('dragover');
-      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-    });
-
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length) handleFile(fileInput.files[0]);
-    });
-
-    function handleFile(file) {
-      selectedImageFile = file;
-      previewName.textContent = file.name;
-      previewSize.textContent = `${(file.size / 1024).toFixed(1)} KB`;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImg.src = e.target.result;
-        selectedImageBase64 = e.target.result.split(',')[1];
-        previewBox.style.display = 'flex';
-        dropzone.style.display = 'none';
-
-        if (!newTargetNameInput.value) {
-          const cleanName = file.name.replace(/\.[^/.]+$/, "");
-          newTargetNameInput.value = `Target ${targets.length + 1} (${cleanName})`;
-        }
-
-        previewImg.onload = () => {
-          analyzeImageAR(previewImg);
-        };
-      };
-      reader.readAsDataURL(file);
-    }
-
-    document.getElementById('btnRemoveImg').addEventListener('click', () => {
-      selectedImageFile = null;
-      selectedImageBase64 = null;
-      fileInput.value = '';
-      previewBox.style.display = 'none';
-      document.getElementById('arAnalysisBox').style.display = 'none';
-      dropzone.style.display = 'block';
-    });
-
-    // --- ANALIZZATORE & MIGLIORATORE QUALITÀ AR ---
-    function analyzeImageAR(imgElement) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const w = imgElement.naturalWidth || imgElement.width || 300;
-      const h = imgElement.naturalHeight || imgElement.height || 300;
-      canvas.width = w;
-      canvas.height = h;
-      ctx.drawImage(imgElement, 0, 0, w, h);
-
-      const imgData = ctx.getImageData(0, 0, w, h);
-      const data = imgData.data;
-
-      // Grayscale conversion
-      const gray = new Uint8Array(w * h);
-      for (let i = 0; i < data.length; i += 4) {
-        gray[i / 4] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-      }
-
-      // Feature Detection (High-contrast gradients in grid cells)
-      const step = Math.max(3, Math.floor(Math.min(w, h) / 90));
-      const featurePoints = [];
-      const gridCount = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-      for (let y = step; y < h - step; y += step) {
-        for (let x = step; x < w - step; x += step) {
-          const idx = y * w + x;
-          const gx = Math.abs(gray[idx + 1] - gray[idx - 1]);
-          const gy = Math.abs(gray[idx + w] - gray[idx - w]);
-          const mag = gx + gy;
-
-          if (mag > 60) {
-            featurePoints.push({ x, y, mag });
-            const gxIdx = Math.min(2, Math.floor((x / w) * 3));
-            const gyIdx = Math.min(2, Math.floor((y / h) * 3));
-            gridCount[gyIdx * 3 + gxIdx]++;
-          }
-        }
-      }
-
-      const totalPoints = featurePoints.length;
-      const activeCells = gridCount.filter(c => c > 5).length;
-      const isResGood = w >= 600 && h >= 600;
-
-      let stars = 1;
-      if (totalPoints > 280 && activeCells >= 7 && isResGood) stars = 5;
-      else if (totalPoints > 180 && activeCells >= 5) stars = 4;
-      else if (totalPoints > 80 && activeCells >= 3) stars = 3;
-      else if (totalPoints > 30) stars = 2;
-
-      // Draw green dots on overlay canvas
-      const overlayCanvas = document.getElementById('featureCanvas');
-      overlayCanvas.width = imgElement.clientWidth || 100;
-      overlayCanvas.height = imgElement.clientHeight || 100;
-      const oCtx = overlayCanvas.getContext('2d');
-      oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
-      const scaleX = overlayCanvas.width / w;
-      const scaleY = overlayCanvas.height / h;
-
-      oCtx.fillStyle = '#10b981';
-      featurePoints.slice(0, 180).forEach(p => {
-        oCtx.beginPath();
-        oCtx.arc(p.x * scaleX, p.y * scaleY, 2, 0, Math.PI * 2);
-        oCtx.fill();
-      });
-
-      document.getElementById('arPointsCount').textContent = `${totalPoints} punti`;
-      document.getElementById('arDistScore').textContent = `${activeCells}/9 zone`;
-      document.getElementById('arResScore').textContent = `${w}x${h} px`;
-      document.getElementById('arStarRating').textContent = '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
-
-      const badge = document.getElementById('arScoreBadge');
-      const advice = document.getElementById('arAdviceText');
-
-      if (stars >= 4) {
-        badge.className = 'badge-status badge-connected';
-        badge.textContent = `Eccellente (${stars}/5 Stars)`;
-        advice.innerHTML = `✅ <strong>Immagine Ottima per l'AR!</strong> Dettagli nitidi e ben distribuiti. Può essere agganciata velocemente dalla fotocamera.`;
-      } else if (stars === 3) {
-        badge.className = 'badge-status';
-        badge.style.background = 'rgba(245,158,11,0.2)';
-        badge.style.color = '#f59e0b';
-        badge.textContent = `Buono (${stars}/5 Stars)`;
-        advice.innerHTML = `⚠️ <strong>Qualità Accettabile.</strong> I punti di tracciamento sono sufficienti. Clicca <em>"Migliora Nitidezza & Contrasto"</em> per aumentarne la stabilità.`;
-      } else {
-        badge.className = 'badge-status badge-disconnected';
-        badge.textContent = `Scarso (${stars}/5 Stars)`;
-        advice.innerHTML = `❌ <strong>Tracciamento Difficile.</strong> Pochi spigoli o parti scure. Clicca <em>"Aggiungi Cornice MiC"</em> per garantire un aggancio stello al 100%!`;
-      }
-
-      document.getElementById('arAnalysisBox').style.display = 'block';
-    }
-
-    document.getElementById('btnEnhanceContrast').addEventListener('click', () => {
-      if (!previewImg.src) return;
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const w = previewImg.naturalWidth;
-      const h = previewImg.naturalHeight;
-      canvas.width = w;
-      canvas.height = h;
-      ctx.drawImage(previewImg, 0, 0, w, h);
-
-      const imgData = ctx.getImageData(0, 0, w, h);
-      const d = imgData.data;
-
-      const contrast = 1.35;
-      const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-
-      for (let i = 0; i < d.length; i += 4) {
-        d[i] = Math.min(255, Math.max(0, factor * (d[i] - 128) + 128));
-        d[i+1] = Math.min(255, Math.max(0, factor * (d[i+1] - 128) + 128));
-        d[i+2] = Math.min(255, Math.max(0, factor * (d[i+2] - 128) + 128));
-      }
-
-      ctx.putImageData(imgData, 0, 0);
-      const newBase64 = canvas.toDataURL('image/jpeg', 0.92);
-      updateLoadedImage(newBase64);
-      log('✨ Applicato miglioramento contrasto e nitidezza all\'immagine.');
-    });
-
-    document.getElementById('btnAddMiCFrame').addEventListener('click', () => {
-      if (!previewImg.src) return;
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-
-      const origW = previewImg.naturalWidth;
-      const origH = previewImg.naturalHeight;
-
-      const borderX = Math.round(origW * 0.08);
-      const headerH = Math.round(origH * 0.16);
-      const footerH = Math.round(origH * 0.16);
-
-      const totalW = origW + borderX * 2;
-      const totalH = origH + headerH + footerH;
-
-      canvas.width = totalW;
-      canvas.height = totalH;
-
-      // MiC Blue Background (#2D489D)
-      ctx.fillStyle = '#2D489D';
-      ctx.fillRect(0, 0, totalW, totalH);
-
-      // Inset Frame Line
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = Math.max(4, Math.round(totalW * 0.008));
-      ctx.strokeRect(borderX / 2, borderX / 2, totalW - borderX, totalH - borderX);
-
-      // Draw Photo Centered
-      ctx.drawImage(previewImg, borderX, headerH, origW, origH);
-
-      // Header Text
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.round(totalW * 0.045)}px -apple-system, BlinkMacSystemFont, sans-serif`;
-      ctx.textAlign = 'center';
-      const targetName = newTargetNameInput.value.trim() || 'TARGET AR';
-      ctx.fillText(targetName.toUpperCase(), totalW / 2, headerH * 0.65);
-
-      // Footer Badge
-      ctx.font = `bold ${Math.round(totalW * 0.032)}px -apple-system, BlinkMacSystemFont, sans-serif`;
-      ctx.fillText('📷 INQUADRA CON LA FOTOCAMERA PER IL VIDEO AR', totalW / 2, totalH - (footerH * 0.45));
-
-      const newBase64 = canvas.toDataURL('image/jpeg', 0.92);
-      updateLoadedImage(newBase64);
-      log('🖼️ Cornice Istituzionale MiC applicata all\'immagine.');
-    });
-
-    function updateLoadedImage(dataUrl) {
-      previewImg.src = dataUrl;
-      selectedImageBase64 = dataUrl.split(',')[1];
-      previewImg.onload = () => {
-        analyzeImageAR(previewImg);
-      };
-    }
-
     // Aggiungi a Lista Locale
     document.getElementById('btnAddToList').addEventListener('click', () => {
       const name = newTargetNameInput.value.trim();
-      const videoUrl = newVideoUrlInput.value.trim();
+      const type = contentTypeSelect.value;
+      const mediaUrl = document.getElementById('newMediaUrl').value.trim();
 
       if (!name) { alert('Inserisci un nome per il target'); return; }
-      if (!videoUrl) { alert('Inserisci l\'URL del video'); return; }
+      if (!mediaUrl) { alert('Inserisci l\'URL dell\'asset/video'); return; }
 
-      // Nome file target progressivo
       const nextIndex = targets.length;
       const extension = selectedImageFile ? selectedImageFile.name.split('.').pop() : 'jpg';
       const formattedNumber = String(nextIndex + 1).padStart(2, '0');
       const filename = `${formattedNumber}.${extension}`;
 
-      targets.push({
+      const newTarget = {
         index: nextIndex,
+        type: type,
         name: name,
         imagePath: `./targets/${filename}`,
-        videoUrl: videoUrl,
+        mediaUrl: mediaUrl,
         _pendingFileBase64: selectedImageBase64,
         _pendingFilename: filename
-      });
+      };
 
+      if (type === 'video') {
+        newTarget.videoUrl = mediaUrl;
+      } else if (type === 'model3d') {
+        newTarget.modelUrl = mediaUrl;
+        newTarget.transform = {
+          position: document.getElementById('modelPos').value.trim() || '0 -0.5 0',
+          rotation: document.getElementById('modelRot').value.trim() || '0 0 0',
+          scale: document.getElementById('modelScale').value.trim() || '1 1 1'
+        };
+      } else if (type === 'sky360') {
+        newTarget.skyUrl = mediaUrl;
+        newTarget.opacity = 0.85;
+      }
+
+      targets.push(newTarget);
       renderTargets();
-      log(`Aggiunto target #${nextIndex} (${name}) alla lista locale.`);
+      log(`Aggiunto target #${nextIndex} (${name} - ${type.toUpperCase()}) alla lista locale.`);
 
-      // Reset form
       newTargetNameInput.value = '';
-      newVideoUrlInput.value = '';
+      document.getElementById('newMediaUrl').value = '';
       document.getElementById('btnRemoveImg').click();
     });
 
