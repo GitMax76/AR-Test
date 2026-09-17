@@ -595,7 +595,7 @@
           <span>🏛️ Passato (3D)</span>
           <span>👁️ Presente (Real)</span>
         </div>
-        <input type="range" id="opacitySlider" class="slider-input" min="0.05" max="1" step="0.05" value="0.9">
+        <input type="range" id="opacitySlider" class="slider-input" min="0" max="1" step="0.05" value="0">
         <div id="gestureHint" style="font-size:0.72rem; color:#94a3b8; margin-top:4px; display:none;">
           👆 Trascina 1 dito per ruotare • 🤏 Pizzica 2 dita per scalare
         </div>
@@ -617,7 +617,7 @@
          SCENA A-FRAME & MINDAR
          ============================================== -->
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind?v=8; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+      mindar-image="imageTargetSrc: ./targets.mind?v=9; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
@@ -774,7 +774,7 @@
       // 1. Carica la configurazione dinamica dei target (Video, Modelli 3D Oggetto, Ricostruzioni Ambiente 3D, Sky 360)
       async function loadDynamicConfig() {
         try {
-          const res = await fetch('./targets.json?v=8', { cache: 'no-cache' });
+          const res = await fetch('./targets.json?v=9', { cache: 'no-cache' });
           if (!res.ok) throw new Error('Failed to load targets.json');
           targetsData = await res.json();
 
@@ -943,6 +943,9 @@
                 scanReticle.classList.add('detected');
                 statusPill.classList.add('active');
 
+                opacitySlider.value = "0";
+                applyCurrentOpacity();
+
                 showToast('💡 Oggetto 3D agganciato! Spostati per osservarlo da ogni angolo.');
               } else if (targetType === 'environment3d') {
                 // COMPORTAMENTO 3: RICOSTRUZIONE 3D AMBIENTE / STANZA (IMMERSIVO 1:1)
@@ -967,6 +970,9 @@
 
                 scanReticle.classList.add('detected');
                 statusPill.classList.add('active');
+
+                opacitySlider.value = "0";
+                applyCurrentOpacity();
 
                 showToast('🏛️ Ricostruzione 3D Ambiente attivata! Ruota lo smartphone per esplorare la stanza.');
               } else if (targetType === 'sky360') {
@@ -1112,18 +1118,25 @@
       });
 
       // Slider Opacità ("Ieri vs Oggi") per sfumare l'ambiente 3D con la stanza reale
-      opacitySlider.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
+      function applyCurrentOpacity() {
+        const val = parseFloat(opacitySlider.value);
+        // Left (val = 0) = 100% 3D Passato (opacity 1.0)
+        // Right (val = 1) = 0% 3D Presente (opacity 0.0)
+        const opacity3D = Math.max(0, Math.min(1, 1 - val));
+
         const activeContainer = (activeTargetItem && activeTargetItem.targetType === 'environment3d') ? env3DContainer : world3DContainer;
         if (activeContainer) {
           activeContainer.object3D.traverse((node) => {
             if (node.isMesh && node.material) {
-              node.material.transparent = true;
-              node.material.opacity = val;
+              node.material.transparent = opacity3D < 0.98;
+              node.material.opacity = opacity3D;
+              node.material.needsUpdate = true;
             }
           });
         }
-      });
+      }
+
+      opacitySlider.addEventListener('input', applyCurrentOpacity);
 
       // Touch Gestures: Ruota (1 dito) e Scalare (2 dita)
       let touchInitialDist = 0;
