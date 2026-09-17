@@ -617,7 +617,7 @@
          SCENA A-FRAME & MINDAR
          ============================================== -->
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind?v=7; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+      mindar-image="imageTargetSrc: ./targets.mind?v=8; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
@@ -726,18 +726,7 @@
       let trackingSyncFrame = null;
       const videoElements = [];
 
-      // Controllo Giroscopio 360° per Esplorazione Ambiente Stanza
-      window.addEventListener('deviceorientation', (e) => {
-        if (!isGyroActive || !mainCamera || !mainCamera.object3D) return;
-        
-        const alpha = e.alpha ? THREE.MathUtils.degToRad(e.alpha) : 0;
-        const beta = e.beta ? THREE.MathUtils.degToRad(e.beta) : 0;
-        const gamma = e.gamma ? THREE.MathUtils.degToRad(e.gamma) : 0;
-
-        // Orienta la fotocamera A-Frame a 360° secondo i movimenti dello smartphone
-        const euler = new THREE.Euler(beta, alpha, -gamma, 'YXZ');
-        mainCamera.object3D.quaternion.setFromEuler(euler);
-      }, true);
+      // Controllo Giroscopio 360° per Esplorazione Ambiente (Gestito nativamente da A-Frame look-controls)
 
       // Helper notifiche toast
       function showToast(msg, duration = 4500) {
@@ -785,7 +774,7 @@
       // 1. Carica la configurazione dinamica dei target (Video, Modelli 3D Oggetto, Ricostruzioni Ambiente 3D, Sky 360)
       async function loadDynamicConfig() {
         try {
-          const res = await fetch('./targets.json?v=7', { cache: 'no-cache' });
+          const res = await fetch('./targets.json?v=8', { cache: 'no-cache' });
           if (!res.ok) throw new Error('Failed to load targets.json');
           targetsData = await res.json();
 
@@ -870,6 +859,25 @@
                 envModelEl.setAttribute('position', pos);
                 envModelEl.setAttribute('rotation', rot);
                 envModelEl.setAttribute('scale', sca);
+
+                envModelEl.addEventListener('model-loaded', () => {
+                  console.log('[WebAR] Modello 3D Ambiente caricato!');
+                  showToast('🏛️ Modello 3D Ambiente pronto!');
+                  if (envModelEl.object3D) {
+                    envModelEl.object3D.traverse((node) => {
+                      if (node.isMesh && node.material) {
+                        node.material.side = THREE.DoubleSide;
+                        node.material.needsUpdate = true;
+                      }
+                    });
+                  }
+                });
+
+                envModelEl.addEventListener('model-error', (err) => {
+                  console.error('[WebAR] Errore caricamento modello 3D:', err);
+                  showToast('⚠️ Errore 3D. Ripristino struttura procedurale...');
+                  if (proceduralBath) proceduralBath.setAttribute('visible', 'true');
+                });
                 
                 env3DContainer.appendChild(envModelEl);
               }
