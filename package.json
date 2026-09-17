@@ -8,8 +8,9 @@
     "compile": "node compile.js"
   },
   "dependencies": {
-    "canvas": "^2.11.2",
-    "mind-ar": "^1.2.5"
+    "jpeg-js": "^0.4.4",
+    "mind-ar": "^1.2.5",
+    "pngjs": "^7.0.0"
   },
   "keywords": [
     "webar",

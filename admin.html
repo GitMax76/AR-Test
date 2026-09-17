@@ -474,8 +474,9 @@
           <div class="form-group">
             <label>Tipo di Contenuto AR</label>
             <select id="contentTypeSelect">
-              <option value="video">🎥 Video MP4 (Overlay 2D)</option>
-              <option value="model3d">🧊 Modello 3D Poligonale (.glb)</option>
+              <option value="video">🎥 Video MP4 (Overlay 2D su carta)</option>
+              <option value="model3d">🧊 Oggetto 3D Singolo (Scultura / Reperto su piano)</option>
+              <option value="environment3d">🏛️ Ricostruzione 3D Ambiente / Stanza (1:1 Immersivo)</option>
               <option value="sky360">🌐 Panorama / Portale 360°</option>
             </select>
           </div>
@@ -636,8 +637,14 @@
 
     contentTypeSelect.addEventListener('change', () => {
       const type = contentTypeSelect.value;
-      if (type === 'model3d') {
+      if (type === 'model3d' || type === 'environment3d') {
         transformFields.style.display = 'block';
+        if (type === 'environment3d') {
+          document.getElementById('modelPos').value = '0 -1.6 0';
+          document.getElementById('modelScale').value = '1 1 1';
+        } else {
+          document.getElementById('modelPos').value = '0 -0.5 0';
+        }
       } else {
         transformFields.style.display = 'none';
       }
@@ -657,7 +664,7 @@
         item.className = 'target-item';
 
         const thumbSrc = t.imagePath.startsWith('./') ? t.imagePath : `./${t.imagePath}`;
-        const typeBadge = t.type === 'model3d' ? '🧊 3D MODEL' : t.type === 'sky360' ? '🌐 360 SKY' : '🎥 VIDEO';
+        const typeBadge = t.type === 'environment3d' ? '🏛️ AMBIENTE 3D' : t.type === 'model3d' ? '🧊 OGGETTO 3D' : t.type === 'sky360' ? '🌐 360 SKY' : '🎥 VIDEO';
         const mediaLink = t.videoUrl || t.modelUrl || t.skyUrl || t.mediaUrl || '';
 
         item.innerHTML = `
@@ -702,10 +709,10 @@
 
       if (type === 'video') {
         newTarget.videoUrl = mediaUrl;
-      } else if (type === 'model3d') {
+      } else if (type === 'model3d' || type === 'environment3d') {
         newTarget.modelUrl = mediaUrl;
         newTarget.transform = {
-          position: document.getElementById('modelPos').value.trim() || '0 -0.5 0',
+          position: document.getElementById('modelPos').value.trim() || (type === 'environment3d' ? '0 -1.6 0' : '0 -0.5 0'),
           rotation: document.getElementById('modelRot').value.trim() || '0 0 0',
           scale: document.getElementById('modelScale').value.trim() || '1 1 1'
         };

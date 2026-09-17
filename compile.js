@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { loadImage } from 'canvas';
+import jpeg from 'jpeg-js';
+import { PNG } from 'pngjs';
 import { OfflineCompiler } from 'mind-ar/src/image-target/offline-compiler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +15,30 @@ const OUTPUT_MIND_PATH = path.join(__dirname, 'targets.mind');
 // Support natural alphanumeric sorting (e.g. 01.jpg, 02.jpg, 10.jpg)
 function naturalSort(a, b) {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+// Pure JS Image Decoder (No native canvas C++ binding required)
+function loadRawImageData(filePath) {
+  const buf = fs.readFileSync(filePath);
+  const ext = path.extname(filePath).toLowerCase();
+
+  if (ext === '.jpg' || ext === '.jpeg') {
+    const raw = jpeg.decode(buf, { useTArray: true, formatAsRGBA: true });
+    return {
+      width: raw.width,
+      height: raw.height,
+      data: new Uint8ClampedArray(raw.data)
+    };
+  } else if (ext === '.png') {
+    const png = PNG.sync.read(buf);
+    return {
+      width: png.width,
+      height: png.height,
+      data: new Uint8ClampedArray(png.data)
+    };
+  } else {
+    throw new Error(`Unsupported image format: ${ext}`);
+  }
 }
 
 async function runCompiler() {
@@ -40,7 +65,7 @@ async function runCompiler() {
   }
 
   // Scan targets directory for any additional or missing images
-  const validExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+  const validExtensions = new Set(['.jpg', '.jpeg', '.png']);
   const filesInDir = fs.readdirSync(TARGETS_DIR)
     .filter(file => validExtensions.has(path.extname(file).toLowerCase()))
     .sort(naturalSort);
@@ -86,7 +111,7 @@ async function runCompiler() {
   // Sort strictly by index
   synchronizedTargets.sort((a, b) => a.index - b.index);
 
-  // Ensure 0-based consecutive indexes
+  // Ensure 0-based consecutive indices
   synchronizedTargets.forEach((t, i) => {
     t.index = i;
   });
@@ -97,7 +122,7 @@ async function runCompiler() {
   });
   console.log('-------------------------\n');
 
-  // Verify all image files exist and load them
+  // Verify all image files exist and load them using pure JS
   const loadedImages = [];
   for (const target of synchronizedTargets) {
     const fullImagePath = path.resolve(__dirname, target.imagePath);
@@ -105,8 +130,8 @@ async function runCompiler() {
       throw new Error(`Target image not found: ${fullImagePath}`);
     }
     console.log(`[Loading] Loading image [${target.index}]: ${target.imagePath}...`);
-    const img = await loadImage(fullImagePath);
-    loadedImages.push(img);
+    const imgData = loadRawImageData(fullImagePath);
+    loadedImages.push(imgData);
   }
 
   console.log(`\n[Compiler] Initializing MindAR OfflineCompiler for ${loadedImages.length} images...`);
@@ -138,3 +163,4 @@ runCompiler().catch((err) => {
   console.error('[Compilation Failed]', err);
   process.exit(1);
 });
+
