@@ -617,7 +617,7 @@
          SCENA A-FRAME & MINDAR
          ============================================== -->
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind?v=6; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+      mindar-image="imageTargetSrc: ./targets.mind?v=7; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
@@ -785,7 +785,7 @@
       // 1. Carica la configurazione dinamica dei target (Video, Modelli 3D Oggetto, Ricostruzioni Ambiente 3D, Sky 360)
       async function loadDynamicConfig() {
         try {
-          const res = await fetch('./targets.json?v=6', { cache: 'no-cache' });
+          const res = await fetch('./targets.json?v=7', { cache: 'no-cache' });
           if (!res.ok) throw new Error('Failed to load targets.json');
           targetsData = await res.json();
 
@@ -836,25 +836,22 @@
               videoEl.addEventListener('loadedmetadata', updateAspect);
             } else if (targetType === 'model3d') {
               // OGGETTO 3D SINGOLO (Posizionato sulla carta / piano)
-              const assetId = `arModel-${index}`;
-              const assetItem = document.createElement('a-asset-item');
-              assetItem.id = assetId;
-              assetItem.setAttribute('src', targetItem.modelUrl || targetItem.mediaUrl);
-              assetsEl.appendChild(assetItem);
+              const modelUrl = targetItem.modelUrl || targetItem.mediaUrl;
+              if (modelUrl) {
+                modelEl = document.createElement('a-gltf-model');
+                modelEl.id = `gltfModel-${index}`;
+                modelEl.setAttribute('src', modelUrl);
+                
+                const pos = targetItem.transform?.position || '0 -0.5 0';
+                const rot = targetItem.transform?.rotation || '0 0 0';
+                const sca = targetItem.transform?.scale || '0.15 0.15 0.15';
 
-              modelEl = document.createElement('a-gltf-model');
-              modelEl.id = `gltfModel-${index}`;
-              modelEl.setAttribute('src', `#${assetId}`);
-              
-              const pos = targetItem.transform?.position || '0 -0.5 0';
-              const rot = targetItem.transform?.rotation || '0 0 0';
-              const sca = targetItem.transform?.scale || '0.15 0.15 0.15';
-
-              modelEl.setAttribute('position', pos);
-              modelEl.setAttribute('rotation', rot);
-              modelEl.setAttribute('scale', sca);
-              
-              world3DContainer.appendChild(modelEl);
+                modelEl.setAttribute('position', pos);
+                modelEl.setAttribute('rotation', rot);
+                modelEl.setAttribute('scale', sca);
+                
+                world3DContainer.appendChild(modelEl);
+              }
             } else if (targetType === 'environment3d') {
               // RICOSTRUZIONE AMBIENTE 3D (Stanza 1:1 immersiva da modello GLB o fallback)
               const modelUrl = targetItem.modelUrl || targetItem.mediaUrl;
@@ -862,19 +859,13 @@
                 const proceduralBath = document.getElementById('proceduralBath');
                 if (proceduralBath) proceduralBath.setAttribute('visible', 'false');
 
-                const assetId = `arEnv-${index}`;
-                const assetItem = document.createElement('a-asset-item');
-                assetItem.id = assetId;
-                assetItem.setAttribute('src', modelUrl);
-                assetsEl.appendChild(assetItem);
-
                 envModelEl = document.createElement('a-gltf-model');
                 envModelEl.id = `gltfEnv-${index}`;
-                envModelEl.setAttribute('src', `#${assetId}`);
+                envModelEl.setAttribute('src', modelUrl);
                 
-                const pos = targetItem.transform?.position || '0 -1.6 0';
+                const pos = targetItem.transform?.position || '0 0 0';
                 const rot = targetItem.transform?.rotation || '0 0 0';
-                const sca = targetItem.transform?.scale || '1 1 1';
+                const sca = targetItem.transform?.scale || '1.2 1.2 1.2';
 
                 envModelEl.setAttribute('position', pos);
                 envModelEl.setAttribute('rotation', rot);
