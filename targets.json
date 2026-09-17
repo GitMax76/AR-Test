@@ -8,10 +8,17 @@
   },
   {
     "index": 1,
-    "type": "model3d",
-    "name": "Ricostruzione 3D San Pietro a Corte (Modello GLB)",
+    "type": "video",
+    "name": "San Pietro a Corte (Video MP4)",
     "imagePath": "./targets/02.jpg",
-    "modelUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Lantern/glTF-Binary/Lantern.glb",
+    "videoUrl": "https://res.cloudinary.com/h0ch4sxd/video/upload/v1788865423/Photorealistic_historical_time.mp4"
+  },
+  {
+    "index": 2,
+    "type": "model3d",
+    "name": "San Pietro a Corte - Ricostruzione 3D",
+    "imagePath": "./targets/03.jpg",
+    "modelUrl": "./targets/terme_romane.glb",
     "transform": {
       "position": "0 -0.5 0.5",
       "rotation": "0 0 0",
