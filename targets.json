@@ -23,6 +23,7 @@
     "type": "environment3d",
     "name": "3. Ricostruzione 3D Ambiente (Stanza 1:1 Immersiva)",
     "imagePath": "./targets/03.jpg",
+    "modelUrl": "./targets/tempio_romano.glb",
     "transform": {
       "position": "0 -1.6 0",
       "rotation": "0 0 0",

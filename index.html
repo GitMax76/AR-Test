@@ -617,7 +617,7 @@
          SCENA A-FRAME & MINDAR
          ============================================== -->
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind?v=5; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+      mindar-image="imageTargetSrc: ./targets.mind?v=6; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
@@ -635,57 +635,57 @@
 
       <!-- Contenitore 3D per Ricostruzione Immersiva dell'Ambiente / Stanza 1:1 -->
       <a-entity id="env3DContainer" visible="false">
-        <!-- Pavimento a Mosaico Marmo Bianco/Grigio (al livello piedi Y = -1.6) -->
-        <a-plane position="0 -1.6 0" rotation="-90 0 0" width="16" height="16" color="#f1f5f9" material="roughness: 0.2; side: double; transparent: true; opacity: 0.85"></a-plane>
+        <a-entity id="proceduralBath">
+          <!-- Pavimento a Mosaico Marmo Bianco/Grigio (al livello piedi Y = -1.6) -->
+          <a-plane position="0 -1.6 0" rotation="-90 0 0" width="16" height="16" color="#f1f5f9" material="roughness: 0.2; side: double; transparent: true; opacity: 0.85"></a-plane>
 
-        <!-- Vasca Termale Centrale con Acqua Turchese Brillante e Bordo in Marmo -->
-        <a-box position="0 -1.65 0" width="7.6" height="0.2" depth="7.6" color="#fbbf24" material="side: double; roughness: 0.3"></a-box>
-        <a-plane position="0 -1.55 0" rotation="-90 0 0" width="7" height="7" color="#38bdf8" material="transparent: true; opacity: 0.8; roughness: 0.1; side: double; metalness: 0.2"></a-plane>
+          <!-- Vasca Termale Centrale con Acqua Turchese Brillante e Bordo in Marmo -->
+          <a-box position="0 -1.65 0" width="7.6" height="0.2" depth="7.6" color="#fbbf24" material="side: double; roughness: 0.3"></a-box>
+          <a-plane position="0 -1.55 0" rotation="-90 0 0" width="7" height="7" color="#38bdf8" material="transparent: true; opacity: 0.8; roughness: 0.1; side: double; metalness: 0.2"></a-plane>
 
-        <!-- Colonnato Peristilio Romano (8 Colonne d'Oro e Marmo con Capitelli) -->
-        <a-cylinder position="-4 0 -4" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
-        <a-box position="-4 1.6 -4" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
-        <a-cylinder position="4 0 -4" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
-        <a-box position="4 1.6 -4" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
-        <a-cylinder position="-4 0 4" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
-        <a-box position="-4 1.6 4" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
-        <a-cylinder position="4 0 4" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
-        <a-box position="4 1.6 4" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
+          <!-- Colonnato Peristilio Romano (8 Colonne d'Oro e Marmo con Capitelli) -->
+          <a-cylinder position="-4 0 -4" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
+          <a-box position="-4 1.6 -4" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
+          <a-cylinder position="4 0 -4" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
+          <a-box position="4 1.6 -4" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
+          <a-cylinder position="-4 0 4" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
+          <a-box position="-4 1.6 4" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
+          <a-cylinder position="4 0 4" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
+          <a-box position="4 1.6 4" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
 
-        <a-cylinder position="0 0 -5.5" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
-        <a-box position="0 1.6 -5.5" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
-        <a-cylinder position="0 0 5.5" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
-        <a-box position="0 1.6 5.5" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
-        <a-cylinder position="-5.5 0 0" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
-        <a-box position="-5.5 1.6 0" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
-        <a-cylinder position="5.5 0 0" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
-        <a-box position="5.5 1.6 0" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
+          <a-cylinder position="0 0 -5.5" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
+          <a-box position="0 1.6 -5.5" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
+          <a-cylinder position="0 0 5.5" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
+          <a-box position="0 1.6 5.5" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
+          <a-cylinder position="-5.5 0 0" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
+          <a-box position="-5.5 1.6 0" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
+          <a-cylinder position="5.5 0 0" radius="0.3" height="3.2" color="#ffffff" material="roughness: 0.2; side: double"></a-cylinder>
+          <a-box position="5.5 1.6 0" width="0.8" height="0.2" depth="0.8" color="#f59e0b" material="side: double"></a-box>
 
-        <!-- Architrave Superiore / Fregio Romano Dorato -->
-        <a-box position="0 1.75 -4" width="8.8" height="0.3" depth="0.6" color="#cbd5e1" material="side: double"></a-box>
-        <a-box position="0 1.75 4" width="8.8" height="0.3" depth="0.6" color="#cbd5e1" material="side: double"></a-box>
-        <a-box position="-4 1.75 0" width="0.6" height="0.3" depth="8.8" color="#cbd5e1" material="side: double"></a-box>
-        <a-box position="4 1.75 0" width="0.6" height="0.3" depth="8.8" color="#cbd5e1" material="side: double"></a-box>
+          <!-- Architrave Superiore / Fregio Romano Dorato -->
+          <a-box position="0 1.75 -4" width="8.8" height="0.3" depth="0.6" color="#cbd5e1" material="side: double"></a-box>
+          <a-box position="0 1.75 4" width="8.8" height="0.3" depth="0.6" color="#cbd5e1" material="side: double"></a-box>
+          <a-box position="-4 1.75 0" width="0.6" height="0.3" depth="8.8" color="#cbd5e1" material="side: double"></a-box>
+          <a-box position="4 1.75 0" width="0.6" height="0.3" depth="8.8" color="#cbd5e1" material="side: double"></a-box>
 
-        <!-- Pareti Perimetrali a Loggiato Aperto (Marmo Chiaro) -->
-        <a-box position="0 0.5 -7" width="15" height="4.2" depth="0.3" color="#f8fafc" material="side: double; transparent: true; opacity: 0.75"></a-box>
-        <a-box position="0 0.5 7" width="15" height="4.2" depth="0.3" color="#f8fafc" material="side: double; transparent: true; opacity: 0.75"></a-box>
-        <a-box position="-7 0.5 0" width="0.3" height="4.2" depth="15" color="#f8fafc" material="side: double; transparent: true; opacity: 0.75"></a-box>
-        <a-box position="7 0.5 0" width="0.3" height="4.2" depth="15" color="#f8fafc" material="side: double; transparent: true; opacity: 0.75"></a-box>
+          <!-- Pareti Perimetrali a Loggiato Aperto (Marmo Chiaro) -->
+          <a-box position="0 0.5 -7" width="15" height="4.2" depth="0.3" color="#f8fafc" material="side: double; transparent: true; opacity: 0.75"></a-box>
+          <a-box position="0 0.5 7" width="15" height="4.2" depth="0.3" color="#f8fafc" material="side: double; transparent: true; opacity: 0.75"></a-box>
+          <a-box position="-7 0.5 0" width="0.3" height="4.2" depth="15" color="#f8fafc" material="side: double; transparent: true; opacity: 0.75"></a-box>
+          <a-box position="7 0.5 0" width="0.3" height="4.2" depth="15" color="#f8fafc" material="side: double; transparent: true; opacity: 0.75"></a-box>
 
-        <!-- Cornice Perimetrale del Peristilio -->
-        <a-torus position="0 2.2 0" rotation="90 0 0" radius="5.5" radius-tubular="0.2" color="#fbbf24" material="side: double"></a-torus>
+          <!-- Cornice Perimetrale del Peristilio -->
+          <a-torus position="0 2.2 0" rotation="90 0 0" radius="5.5" radius-tubular="0.2" color="#fbbf24" material="side: double"></a-torus>
 
-        <!-- Torce Romane e Pedestali d'Angolo -->
-        <a-cylinder position="-3.5 -1.0 -3.5" radius="0.25" height="1.2" color="#64748b"></a-cylinder>
-        <a-sphere position="-3.5 -0.3 -3.5" radius="0.25" color="#f59e0b" material="emissive: #f59e0b; emissiveIntensity: 0.8"></a-sphere>
-        <a-light type="point" position="-3.5 0 -3.5" intensity="1.5" color="#fbbf24" distance="10"></a-light>
+          <!-- Torce Romane e Pedestali d'Angolo -->
+          <a-cylinder position="-3.5 -1.0 -3.5" radius="0.25" height="1.2" color="#64748b"></a-cylinder>
+          <a-sphere position="-3.5 -0.3 -3.5" radius="0.25" color="#f59e0b" material="emissive: #f59e0b; emissiveIntensity: 0.8"></a-sphere>
 
-        <a-cylinder position="3.5 -1.0 -3.5" radius="0.25" height="1.2" color="#64748b"></a-cylinder>
-        <a-sphere position="3.5 -0.3 -3.5" radius="0.25" color="#f59e0b" material="emissive: #f59e0b; emissiveIntensity: 0.8"></a-sphere>
-        <a-light type="point" position="3.5 0 -3.5" intensity="1.5" color="#fbbf24" distance="10"></a-light>
+          <a-cylinder position="3.5 -1.0 -3.5" radius="0.25" height="1.2" color="#64748b"></a-cylinder>
+          <a-sphere position="3.5 -0.3 -3.5" radius="0.25" color="#f59e0b" material="emissive: #f59e0b; emissiveIntensity: 0.8"></a-sphere>
+        </a-entity>
 
-        <!-- Illuminazione Ambientale Chiara e Calda per Evitare Schermo Nero -->
+        <!-- Illuminazione Ambientale Chiara e Calda -->
         <a-light type="ambient" intensity="1.2" color="#ffffff"></a-light>
         <a-light type="directional" position="0 5 2" intensity="1.0" color="#fef08a"></a-light>
       </a-entity>
@@ -785,7 +785,7 @@
       // 1. Carica la configurazione dinamica dei target (Video, Modelli 3D Oggetto, Ricostruzioni Ambiente 3D, Sky 360)
       async function loadDynamicConfig() {
         try {
-          const res = await fetch('./targets.json?v=5', { cache: 'no-cache' });
+          const res = await fetch('./targets.json?v=6', { cache: 'no-cache' });
           if (!res.ok) throw new Error('Failed to load targets.json');
           targetsData = await res.json();
 
@@ -856,9 +856,12 @@
               
               world3DContainer.appendChild(modelEl);
             } else if (targetType === 'environment3d') {
-              // RICOSTRUZIONE AMBIENTE 3D (Stanza 1:1 attorno all'utente)
+              // RICOSTRUZIONE AMBIENTE 3D (Stanza 1:1 immersiva da modello GLB o fallback)
               const modelUrl = targetItem.modelUrl || targetItem.mediaUrl;
               if (modelUrl) {
+                const proceduralBath = document.getElementById('proceduralBath');
+                if (proceduralBath) proceduralBath.setAttribute('visible', 'false');
+
                 const assetId = `arEnv-${index}`;
                 const assetItem = document.createElement('a-asset-item');
                 assetItem.id = assetId;
