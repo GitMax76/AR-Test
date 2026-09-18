@@ -617,7 +617,7 @@
          SCENA A-FRAME & MINDAR
          ============================================== -->
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind?v=10; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+      mindar-image="imageTargetSrc: ./targets.mind?v=11; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
@@ -774,7 +774,7 @@
       // 1. Carica la configurazione dinamica dei target (Video, Modelli 3D Oggetto, Ricostruzioni Ambiente 3D, Sky 360)
       async function loadDynamicConfig() {
         try {
-          const res = await fetch('./targets.json?v=10', { cache: 'no-cache' });
+          const res = await fetch('./targets.json?v=11', { cache: 'no-cache' });
           if (!res.ok) throw new Error('Failed to load targets.json');
           targetsData = await res.json();
 
@@ -842,7 +842,7 @@
                 world3DContainer.appendChild(modelEl);
               }
             } else if (targetType === 'environment3d') {
-              // RICOSTRUZIONE AMBIENTE 3D (Stanza 1:1 immersiva da modello GLB con fallback procedurale)
+              // RICOSTRUZIONE AMBIENTE 3D (Stanza 1:1 immersiva con struttura procedurale + modello GLTF)
               const modelUrl = targetItem.modelUrl || targetItem.mediaUrl;
               if (modelUrl) {
                 envModelEl = document.createElement('a-gltf-model');
@@ -859,9 +859,6 @@
 
                 envModelEl.addEventListener('model-loaded', () => {
                   console.log('[WebAR] Modello GLTF Ambiente caricato con successo!');
-                  const proceduralBath = document.getElementById('proceduralBath');
-                  if (proceduralBath) proceduralBath.setAttribute('visible', 'false');
-
                   if (envModelEl.object3D) {
                     envModelEl.object3D.traverse((node) => {
                       if (node.isMesh && node.material) {
@@ -875,8 +872,6 @@
 
                 envModelEl.addEventListener('model-error', (err) => {
                   console.warn('[WebAR] Modello GLTF non caricato. Mantengo struttura procedurale:', err);
-                  const proceduralBath = document.getElementById('proceduralBath');
-                  if (proceduralBath) proceduralBath.setAttribute('visible', 'true');
                   applyCurrentOpacity();
                 });
                 
@@ -949,23 +944,25 @@
 
                 showToast('💡 Oggetto 3D agganciato! Spostati per osservarlo da ogni angolo.');
               } else if (targetType === 'environment3d') {
-                // COMPORTAMENTO 3: RICOSTRUZIONE 3D AMBIENTE / STANZA (IMMERSIVO 1:1)
+                // COMPORTAMENTO 3: RICOSTRUZIONE 3D AMBIENTE / STANZA (START POINT ESPORTATO NEL MONDO AR)
                 isTargetTracked = false;
                 is3DAnchored = true;
                 isGyroActive = true; // Attiva il Giroscopio per guardare la stanza a 360°
 
+                // Posizionamento spaziale centrato alla fotocamera (Start Point 360 unanchored)
+                if (env3DContainer && env3DContainer.object3D) {
+                  env3DContainer.object3D.position.set(0, 0, 0);
+                  const initialYaw = (mainCamera && mainCamera.object3D) ? mainCamera.object3D.rotation.y : 0;
+                  env3DContainer.object3D.rotation.set(0, initialYaw, 0);
+                }
+
                 world3DContainer.setAttribute('visible', 'false');
                 env3DContainer.setAttribute('visible', 'true');
-
-                // Orientamento iniziale dell'ambiente verso lo sguardo dell'utente
-                if (mainCamera && mainCamera.object3D) {
-                  env3DContainer.object3D.rotation.y = mainCamera.object3D.rotation.y;
-                }
 
                 recenterBtn.textContent = '🧭 Allinea Pareti';
                 recenterBtn.style.display = 'inline-flex';
                 reset3dBtn.style.display = 'inline-flex';
-                gestureHint.innerHTML = '📱 Ruota lo smartphone a 360° • 👆 Trascina per allineare le pareti alla stanza';
+                gestureHint.innerHTML = '📱 Ruota lo smartphone a 360° • 👆 Trascina per ruotare la stanza';
                 gestureHint.style.display = 'block';
                 arHudBottom.classList.remove('hidden');
 
