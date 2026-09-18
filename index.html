@@ -617,7 +617,7 @@
          SCENA A-FRAME & MINDAR
          ============================================== -->
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind?v=9; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+      mindar-image="imageTargetSrc: ./targets.mind?v=10; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
@@ -774,7 +774,7 @@
       // 1. Carica la configurazione dinamica dei target (Video, Modelli 3D Oggetto, Ricostruzioni Ambiente 3D, Sky 360)
       async function loadDynamicConfig() {
         try {
-          const res = await fetch('./targets.json?v=9', { cache: 'no-cache' });
+          const res = await fetch('./targets.json?v=10', { cache: 'no-cache' });
           if (!res.ok) throw new Error('Failed to load targets.json');
           targetsData = await res.json();
 
@@ -842,12 +842,9 @@
                 world3DContainer.appendChild(modelEl);
               }
             } else if (targetType === 'environment3d') {
-              // RICOSTRUZIONE AMBIENTE 3D (Stanza 1:1 immersiva da modello GLB o fallback)
+              // RICOSTRUZIONE AMBIENTE 3D (Stanza 1:1 immersiva da modello GLB con fallback procedurale)
               const modelUrl = targetItem.modelUrl || targetItem.mediaUrl;
               if (modelUrl) {
-                const proceduralBath = document.getElementById('proceduralBath');
-                if (proceduralBath) proceduralBath.setAttribute('visible', 'false');
-
                 envModelEl = document.createElement('a-gltf-model');
                 envModelEl.id = `gltfEnv-${index}`;
                 envModelEl.setAttribute('src', modelUrl);
@@ -861,8 +858,10 @@
                 envModelEl.setAttribute('scale', sca);
 
                 envModelEl.addEventListener('model-loaded', () => {
-                  console.log('[WebAR] Modello 3D Ambiente caricato!');
-                  showToast('🏛️ Modello 3D Ambiente pronto!');
+                  console.log('[WebAR] Modello GLTF Ambiente caricato con successo!');
+                  const proceduralBath = document.getElementById('proceduralBath');
+                  if (proceduralBath) proceduralBath.setAttribute('visible', 'false');
+
                   if (envModelEl.object3D) {
                     envModelEl.object3D.traverse((node) => {
                       if (node.isMesh && node.material) {
@@ -871,12 +870,14 @@
                       }
                     });
                   }
+                  applyCurrentOpacity();
                 });
 
                 envModelEl.addEventListener('model-error', (err) => {
-                  console.error('[WebAR] Errore caricamento modello 3D:', err);
-                  showToast('⚠️ Errore 3D. Ripristino struttura procedurale...');
+                  console.warn('[WebAR] Modello GLTF non caricato. Mantengo struttura procedurale:', err);
+                  const proceduralBath = document.getElementById('proceduralBath');
                   if (proceduralBath) proceduralBath.setAttribute('visible', 'true');
+                  applyCurrentOpacity();
                 });
                 
                 env3DContainer.appendChild(envModelEl);
