@@ -617,7 +617,7 @@
          SCENA A-FRAME & MINDAR
          ============================================== -->
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind?v=11; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
+      mindar-image="imageTargetSrc: ./targets.mind?v=12; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
@@ -774,7 +774,7 @@
       // 1. Carica la configurazione dinamica dei target (Video, Modelli 3D Oggetto, Ricostruzioni Ambiente 3D, Sky 360)
       async function loadDynamicConfig() {
         try {
-          const res = await fetch('./targets.json?v=11', { cache: 'no-cache' });
+          const res = await fetch('./targets.json?v=12', { cache: 'no-cache' });
           if (!res.ok) throw new Error('Failed to load targets.json');
           targetsData = await res.json();
 
@@ -797,7 +797,7 @@
               videoEl = document.createElement('video');
               videoEl.id = videoId;
               videoEl.src = targetItem.videoUrl || targetItem.mediaUrl;
-              videoEl.setAttribute('preload', 'metadata');
+              videoEl.setAttribute('preload', 'auto');
               videoEl.setAttribute('crossorigin', 'anonymous');
               videoEl.setAttribute('playsinline', '');
               videoEl.setAttribute('webkit-playsinline', '');
@@ -811,7 +811,7 @@
               videoPlane.setAttribute('src', `#${videoId}`);
               videoPlane.setAttribute('width', '1');
               videoPlane.setAttribute('height', '1');
-              videoPlane.setAttribute('position', '0 0 0');
+              videoPlane.setAttribute('position', '0 0 0.005');
               videoPlane.setAttribute('rotation', '0 0 0');
               targetEntity.appendChild(videoPlane);
 
@@ -823,15 +823,20 @@
                 }
               };
               videoEl.addEventListener('loadedmetadata', updateAspect);
+              videoEl.addEventListener('loadeddata', updateAspect);
+              videoEl.addEventListener('play', updateAspect);
+              if (videoEl.readyState >= 1) {
+                updateAspect();
+              }
             } else if (targetType === 'model3d') {
-              // OGGETTO 3D SINGOLO (Posizionato sulla carta / piano)
+              // OGGETTO 3D SINGOLO (Ancorato al target e sincronizzato con il contenitore spaziale)
               const modelUrl = targetItem.modelUrl || targetItem.mediaUrl;
               if (modelUrl) {
                 modelEl = document.createElement('a-gltf-model');
                 modelEl.id = `gltfModel-${index}`;
                 modelEl.setAttribute('src', modelUrl);
                 
-                const pos = targetItem.transform?.position || '0 -0.5 0';
+                const pos = targetItem.transform?.position || '0 0 0';
                 const rot = targetItem.transform?.rotation || '0 0 0';
                 const sca = targetItem.transform?.scale || '0.15 0.15 0.15';
 
@@ -839,7 +844,12 @@
                 modelEl.setAttribute('rotation', rot);
                 modelEl.setAttribute('scale', sca);
                 
-                world3DContainer.appendChild(modelEl);
+                targetEntity.appendChild(modelEl);
+
+                // Duplicato opzionale in world3DContainer per persistenza spaziale
+                const worldModelEl = modelEl.cloneNode(true);
+                worldModelEl.id = `gltfWorldModel-${index}`;
+                world3DContainer.appendChild(worldModelEl);
               }
             } else if (targetType === 'environment3d') {
               // RICOSTRUZIONE AMBIENTE 3D (Stanza 1:1 immersiva con struttura procedurale + modello GLTF)

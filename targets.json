@@ -8,26 +8,21 @@
   },
   {
     "index": 1,
-    "type": "model3d",
-    "name": "2. Oggetto 3D Singolo (Reperto da tavolo)",
+    "type": "video",
+    "name": "2. Video 2D (San Pietro a Corte)",
     "imagePath": "./targets/02.jpg",
-    "modelUrl": "./targets/terme_romane.glb",
-    "transform": {
-      "position": "0 -0.5 0",
-      "rotation": "0 0 0",
-      "scale": "0.15 0.15 0.15"
-    }
+    "videoUrl": "https://res.cloudinary.com/h0ch4sxd/video/upload/v1788865423/Photorealistic_historical_time.mp4"
   },
   {
     "index": 2,
-    "type": "environment3d",
-    "name": "3. Ricostruzione 3D Ambiente (Stanza 1:1 Immersiva)",
+    "type": "model3d",
+    "name": "3. Ricostruzione 3D (San Pietro a Corte / Terme Romane)",
     "imagePath": "./targets/03.jpg",
-    "modelUrl": "./targets/tempio_romano.glb",
+    "modelUrl": "./targets/terme_romane.glb",
     "transform": {
       "position": "0 0 0",
       "rotation": "0 0 0",
-      "scale": "1.2 1.2 1.2"
+      "scale": "0.15 0.15 0.15"
     }
   }
 ]
